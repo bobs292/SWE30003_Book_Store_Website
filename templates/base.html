@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Favourite Books</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+</head>
+
+<body>
+    <nav>
+        <a href="{{ url_for('homepage') }}" class="{% if request.endpoint == 'homepage' %}active{% endif %}">Home</a>
+        <a href="{{ url_for('catalogue') }}" class="{% if request.endpoint == 'catalogue' %}active{% endif %}">Catalogue</a>
+
+        <!-- change to when logged Out is visible -->
+        <a href="{{ url_for('register') }}" class="{% if request.endpoint == 'register' %}active{% endif %}">Register</a>
+        <a href="{{ url_for('login') }}" class="{% if request.endpoint == 'login' %}active{% endif %}">Login</a>
+        <!-- change to when logged in is visible-->
+        <a href="{{ url_for('cart') }}" class="{% if request.endpoint == 'cart' %}active{% endif %}">Cart</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

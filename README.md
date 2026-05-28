@@ -76,3 +76,13 @@ contract it broke.
 
 The check runs automatically when you commit. If a layer boundary is broken
 the commit is blocked and you will see output like this:
+
+
+To explore the dependencie graphs run:
+```bash
+hatch run import-linter explore src
+```
+or to explore a specifc layer (replace domain with your target layer)
+```bash
+hatch run import-linter explore src.domain
+```

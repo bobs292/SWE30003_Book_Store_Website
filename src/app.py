@@ -3,7 +3,7 @@ from src.presentation.routes.auth_routes import auth
 from src.presentation.routes.catalogue_routes import catalogue
 from src.presentation.routes.order_routes import order
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='presentation/templates', static_folder='presentation/static')
 app.secret_key = 'your-secret-key-here'
 
 app.register_blueprint(auth)

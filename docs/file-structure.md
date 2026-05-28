@@ -27,12 +27,20 @@ happening underneath. This is the Repository Pattern from Domain-Driven Design.
 
 ### `/repositories/abstract`
 Contains the contracts (abstract base classes) that define what operations a
-repository must exist without implementing them. The domain layer imports
+repository must support without implementing them. The domain layer imports
 exclusively from here — it knows the interface but never the implementation.
 Swapping storage backends requires no changes to the domain logic or its
 imports, as the domain always references `/abstract` regardless of which
 concrete implementation is injected. Only the import in `app.py` changes,
 as it is the only place in the project where a concrete repository is named.
+
+However, if a new backend is adopted to leverage features unavailable in the
+current implementation (e.g. migrating from SQLite to Postgres for advanced
+querying), `/abstract` may need to be extended to expose those new operations.
+This invalidates any other concrete implementations that inherit from it, as
+they will not implement the new abstract methods. In this case a team should
+fork `/abstract` into a new contract (e.g. `/abstract_postgres`) rather than
+modifying the shared one, preserving the stability of existing implementations.
 
 ### `/repositories/sqlite`
 The concrete SQLite implementation of each abstract repository. This is the

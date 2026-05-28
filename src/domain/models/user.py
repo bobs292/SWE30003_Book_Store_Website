@@ -1,4 +1,6 @@
-class User:
+from abc import ABC, abstractmethod
+
+class User(ABC):
     def __init__(self, name, address, phone_number, password):
         self.name = name
         self.address = address

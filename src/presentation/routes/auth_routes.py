@@ -15,7 +15,6 @@ def register():
             flash('Please fill in all fields.', 'error')
             return render_template('register.html')
         new_customer = Customer(name, address, phone_number, password)
-        new_customer.create_user()
         flash('Registration successful. Please log in.', 'success')
         return redirect(url_for('auth.login'))
     return render_template('register.html')

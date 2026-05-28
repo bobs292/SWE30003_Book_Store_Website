@@ -1,5 +1,5 @@
 from flask import Flask, render_template, session, redirect, url_for, request, flash
-from Customer import Customer
+from domain.models.customer import Customer
 import json
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # Required for session
@@ -49,7 +49,7 @@ def login():
         if not all([name, password]):
             flash('Please fill in all fields.', 'error')
             return render_template('login.html')
-        with open('data.json', 'r', encoding='utf-8') as file:
+        with open('data/data.json', 'r', encoding='utf-8') as file:
             data = json.load(file)
 
 

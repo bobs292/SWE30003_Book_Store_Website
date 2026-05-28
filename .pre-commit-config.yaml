@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: import-linter
+        name: Check architectural import contracts
+        entry: hatch run lint-imports
+        language: system
+        pass_filenames: false

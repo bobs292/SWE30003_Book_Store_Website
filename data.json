@@ -1,0 +1,124 @@
+{
+	"books": [
+		{
+			"id": 1,
+			"title": "The Silent Reader",
+			"author": "A. Harper",
+			"genre": "Mystery",
+			"description": "A quiet librarian uncovers a coded diary that connects a missing author to a decades-old case.",
+			"price": 24.99,
+			"stock": 8,
+			"cover_color": "#9fb8ad"
+		},
+		{
+			"id": 2,
+			"title": "Midnight Letters",
+			"author": "L. Chen",
+			"genre": "Historical Fiction",
+			"description": "A bundle of wartime letters reveals a love story that reshapes a family's present.",
+			"price": 19.5,
+			"stock": 12,
+			"cover_color": "#c9a27a"
+		},
+		{
+			"id": 3,
+			"title": "Garden of Pages",
+			"author": "M. Patel",
+			"genre": "Literary Fiction",
+			"description": "Three neighbors restore a forgotten greenhouse and uncover a notebook that binds their lives.",
+			"price": 29.0,
+			"stock": 5,
+			"cover_color": "#7fa88d"
+		},
+		{
+			"id": 4,
+			"title": "Signals in the Stacks",
+			"author": "R. Gomez",
+			"genre": "Science Fiction",
+			"description": "A radio archivist hears a signal from deep space that was never meant for Earth.",
+			"price": 22.75,
+			"stock": 0,
+			"cover_color": "#7183a0"
+		},
+		{
+			"id": 5,
+			"title": "Paper Lanterns",
+			"author": "K. Howard",
+			"genre": "Contemporary",
+			"description": "A community festival in a coastal town pulls old friends back together for one more season.",
+			"price": 18.4,
+			"stock": 9,
+			"cover_color": "#e3b07a"
+		},
+		{
+			"id": 6,
+			"title": "Harbor of Stories",
+			"author": "S. Wright",
+			"genre": "Adventure",
+			"description": "A maritime historian follows a trail of maps across the Pacific to find a vanished ship.",
+			"price": 27.25,
+			"stock": 7,
+			"cover_color": "#4f7b8b"
+		},
+		{
+			"id": 7,
+			"title": "The Brass Bookmark",
+			"author": "E. Flores",
+			"genre": "Fantasy",
+			"description": "An apprentice bookbinder discovers a relic that lets her step into the stories she repairs.",
+			"price": 21.6,
+			"stock": 4,
+			"cover_color": "#b08968"
+		},
+		{
+			"id": 8,
+			"title": "Atlas of Echoes",
+			"author": "N. Rivers",
+			"genre": "Speculative",
+			"description": "A cartographer charts the memories of a floating city as it drifts across a shifting ocean.",
+			"price": 31.0,
+			"stock": 6,
+			"cover_color": "#5f7aa8"
+		},
+		{
+			"id": 9,
+			"title": "Morning on the Shelf",
+			"author": "D. Clarke",
+			"genre": "Nonfiction",
+			"description": "A practical guide to building a calm reading ritual and reclaiming focus in a busy world.",
+			"price": 16.95,
+			"stock": 14,
+			"cover_color": "#c6bfa4"
+		},
+		{
+			"id": 10,
+			"title": "Ink and Orchard",
+			"author": "T. Nguyen",
+			"genre": "Romance",
+			"description": "A chef and a poet rebuild an old orchard into a cafe and discover a second chance.",
+			"price": 23.2,
+			"stock": 3,
+			"cover_color": "#d89c8f"
+		},
+		{
+			"id": 11,
+			"title": "Starlight Bindery",
+			"author": "P. Singh",
+			"genre": "Fantasy",
+			"description": "A bindery that works by starlight prepares a final volume to protect the city from a storm.",
+			"price": 26.8,
+			"stock": 10,
+			"cover_color": "#7c6fb3"
+		},
+		{
+			"id": 12,
+			"title": "The Quiet Index",
+			"author": "J. Morris",
+			"genre": "Mystery",
+			"description": "A cataloger finds a shelf of unlisted titles that point to a hidden set of patrons.",
+			"price": 20.0,
+			"stock": 11,
+			"cover_color": "#8b948c"
+		}
+	]
+}

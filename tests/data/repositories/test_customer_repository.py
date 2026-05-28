@@ -2,7 +2,7 @@ import pytest
 import src.data.database as db_module
 from src.data.database import init_db
 from src.data.repositories.customer_repository import SqliteCustomerRepository
-from src.domain.models.customer import Customer
+from src.domain.models.customer import Customer, Address
 
 
 @pytest.fixture(autouse=True)
@@ -18,12 +18,7 @@ def repo():
 
 
 VALID_PASSWORD = "$2b$12$ahashedpasswordthatisatleast60characterslong1234567890ab"
-VALID_ADDRESS = {
-    "street": "1 Example Street",
-    "suburb": "Melbourne",
-    "state": "VIC",
-    "postcode": "3000"
-}
+VALID_ADDRESS = Address(street="1 Example Street", suburb="Melbourne", state="VIC", postcode="3000")
 
 
 def make_customer(**overrides):
@@ -33,10 +28,7 @@ def make_customer(**overrides):
         email="john.smith@example.com",
         phone_number="0412345678",
         password=VALID_PASSWORD,
-        street=None,
-        suburb=None,
-        state=None,
-        postcode=None
+        address=None
     )
     defaults.update(overrides)
     return Customer(**defaults)
@@ -137,73 +129,69 @@ def test_password_too_short_raises(repo):
         repo.save(make_customer(password="a" * 59))
 
 def test_full_address_is_valid(repo):
-    repo.save(make_customer(**VALID_ADDRESS))
+    repo.save(make_customer(address=VALID_ADDRESS))
     assert repo.find_by_email("john.smith@example.com") is not None
 
-def test_all_address_fields_null_is_valid(repo):
-    repo.save(make_customer(street=None, suburb=None, state=None, postcode=None))
+def test_no_address_is_valid(repo):
+    repo.save(make_customer(address=None))
     assert repo.find_by_email("john.smith@example.com") is not None
-
-def test_street_without_suburb_raises(repo):
-    with pytest.raises(Exception):
-        repo.save(make_customer(street="1 Example St", suburb=None, state="VIC", postcode="3000"))
 
 def test_street_lower_bound(repo):
-    repo.save(make_customer(street="A", suburb="Melbourne", state="VIC", postcode="3000"))
+    repo.save(make_customer(address=Address(street="A", suburb="Melbourne", state="VIC", postcode="3000")))
     assert repo.find_by_email("john.smith@example.com") is not None
 
 def test_street_upper_bound(repo):
-    repo.save(make_customer(street="A" * 100, suburb="Melbourne", state="VIC", postcode="3000"))
+    repo.save(make_customer(address=Address(street="A" * 100, suburb="Melbourne", state="VIC", postcode="3000")))
     assert repo.find_by_email("john.smith@example.com") is not None
 
 def test_street_over_limit_raises(repo):
     with pytest.raises(Exception):
-        repo.save(make_customer(street="A" * 101, suburb="Melbourne", state="VIC", postcode="3000"))
+        repo.save(make_customer(address=Address(street="A" * 101, suburb="Melbourne", state="VIC", postcode="3000")))
 
 def test_suburb_lower_bound(repo):
-    repo.save(make_customer(street="1 Example St", suburb="A", state="VIC", postcode="3000"))
+    repo.save(make_customer(address=Address(street="1 Example St", suburb="A", state="VIC", postcode="3000")))
     assert repo.find_by_email("john.smith@example.com") is not None
 
 def test_suburb_upper_bound(repo):
-    repo.save(make_customer(street="1 Example St", suburb="A" * 50, state="VIC", postcode="3000"))
+    repo.save(make_customer(address=Address(street="1 Example St", suburb="A" * 50, state="VIC", postcode="3000")))
     assert repo.find_by_email("john.smith@example.com") is not None
 
 def test_suburb_over_limit_raises(repo):
     with pytest.raises(Exception):
-        repo.save(make_customer(street="1 Example St", suburb="A" * 51, state="VIC", postcode="3000"))
+        repo.save(make_customer(address=Address(street="1 Example St", suburb="A" * 51, state="VIC", postcode="3000")))
 
 def test_state_lower_bound(repo):
-    repo.save(make_customer(street="1 Example St", suburb="Melbourne", state="VI", postcode="3000"))
+    repo.save(make_customer(address=Address(street="1 Example St", suburb="Melbourne", state="VI", postcode="3000")))
     assert repo.find_by_email("john.smith@example.com") is not None
 
 def test_state_upper_bound(repo):
-    repo.save(make_customer(street="1 Example St", suburb="Melbourne", state="VIC", postcode="3000"))
+    repo.save(make_customer(address=Address(street="1 Example St", suburb="Melbourne", state="VIC", postcode="3000")))
     assert repo.find_by_email("john.smith@example.com") is not None
 
 def test_state_too_short_raises(repo):
     with pytest.raises(Exception):
-        repo.save(make_customer(street="1 Example St", suburb="Melbourne", state="V", postcode="3000"))
+        repo.save(make_customer(address=Address(street="1 Example St", suburb="Melbourne", state="V", postcode="3000")))
 
 def test_state_too_long_raises(repo):
     with pytest.raises(Exception):
-        repo.save(make_customer(street="1 Example St", suburb="Melbourne", state="VICT", postcode="3000"))
+        repo.save(make_customer(address=Address(street="1 Example St", suburb="Melbourne", state="VICT", postcode="3000")))
 
 def test_state_non_letters_raises(repo):
     with pytest.raises(Exception):
-        repo.save(make_customer(street="1 Example St", suburb="Melbourne", state="V1", postcode="3000"))
+        repo.save(make_customer(address=Address(street="1 Example St", suburb="Melbourne", state="V1", postcode="3000")))
 
 def test_postcode_valid(repo):
-    repo.save(make_customer(street="1 Example St", suburb="Melbourne", state="VIC", postcode="3000"))
+    repo.save(make_customer(address=Address(street="1 Example St", suburb="Melbourne", state="VIC", postcode="3000")))
     assert repo.find_by_email("john.smith@example.com") is not None
 
 def test_postcode_too_short_raises(repo):
     with pytest.raises(Exception):
-        repo.save(make_customer(street="1 Example St", suburb="Melbourne", state="VIC", postcode="300"))
+        repo.save(make_customer(address=Address(street="1 Example St", suburb="Melbourne", state="VIC", postcode="300")))
 
 def test_postcode_too_long_raises(repo):
     with pytest.raises(Exception):
-        repo.save(make_customer(street="1 Example St", suburb="Melbourne", state="VIC", postcode="30001"))
+        repo.save(make_customer(address=Address(street="1 Example St", suburb="Melbourne", state="VIC", postcode="30001")))
 
 def test_postcode_non_digits_raises(repo):
     with pytest.raises(Exception):
-        repo.save(make_customer(street="1 Example St", suburb="Melbourne", state="VIC", postcode="3O0O"))
+        repo.save(make_customer(address=Address(street="1 Example St", suburb="Melbourne", state="VIC", postcode="3O0O")))

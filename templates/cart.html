@@ -4,11 +4,64 @@
  <!-- Shows total price -->
   <!-- Proceed to checkout button -->
 
-  
 {% extends "base.html" %}
 
 {% block content %}
-<div>
-    
+<div class="page-header">
+  <h1>Your Cart</h1>
+  <p>Review your items, update quantities, or remove books.</p>
 </div>
+
+{% if cart_items %}
+<div class="cart-summary">
+  <table class="cart-table">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Price</th>
+        <th>Quantity</th>
+        <th>Line Total</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in cart_items %}
+      <tr>
+        <td>
+          <strong>{{ item.book.title }}</strong><br>
+          <span class="meta">{{ item.book.author }}</span>
+        </td>
+        <td>${{ '%.2f'|format(item.book.price) }}</td>
+        <td>
+          <form class="inline-form" method="post" action="{{ url_for('cart_update') }}">
+            <input type="hidden" name="book_id" value="{{ item.book.id }}">
+            <input type="number" name="quantity" min="0" max="{{ item.book.stock }}" value="{{ item.quantity }}">
+            <button type="submit">Update</button>
+          </form>
+        </td>
+        <td>${{ '%.2f'|format(item.line_total) }}</td>
+        <td>
+          <form class="inline-form" method="post" action="{{ url_for('cart_remove') }}">
+            <input type="hidden" name="book_id" value="{{ item.book.id }}">
+            <button type="submit" class="danger">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="cart-totals">
+    <p><strong>Subtotal:</strong> ${{ '%.2f'|format(subtotal) }}</p>
+    <div class="cart-actions">
+      <form method="post" action="{{ url_for('cart_clear') }}">
+        <button type="submit" class="ghost">Clear cart</button>
+      </form>
+      <a class="primary" href="{{ url_for('checkout') }}">Proceed to checkout</a>
+    </div>
+  </div>
+</div>
+{% else %}
+<p>Your cart is empty. Browse the <a href="{{ url_for('catalogue') }}">catalogue</a> to add books.</p>
+{% endif %}
 {% endblock %}

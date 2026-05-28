@@ -1,5 +1,5 @@
 from flask import Flask, render_template, session, redirect, url_for, request, flash
-from User import User
+from Customer import Customer
 import json
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # Required for session
@@ -33,8 +33,8 @@ def register():
             flash('Please fill in all fields.', 'error')
             return render_template('register.html')
 
-        user = User(name, address, phone_number, password)
-        user.create_user()
+        new_customer = Customer(name, address, phone_number, password)
+        new_customer.create_user()
 
         flash('Registration successful. Please log in.', 'success')
         return redirect(url_for('login'))

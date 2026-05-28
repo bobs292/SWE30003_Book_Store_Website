@@ -1,5 +1,5 @@
 from flask import Flask, render_template, session, redirect, url_for, request, flash
-from domain.models.customer import Customer
+from src.domain.models.customer import Customer
 import json
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # Required for session

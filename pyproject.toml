@@ -1,0 +1,5 @@
+[project]
+name = "Book-Store-Website"
+version = "0.1"
+dependencies = ["flask"]
+

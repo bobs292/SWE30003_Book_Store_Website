@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 class User(ABC):
-    def __init__(self, name, address, phone_number, password):
-        self.name = name
-        self.address = address
-        self.phone_number = phone_number
+    def __init__(self, first_name, last_name, email, password):
+        self.first_name = first_name
+        self.last_name = last_name
+        self.email = email
         self.password = password

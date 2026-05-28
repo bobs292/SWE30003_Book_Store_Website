@@ -13,7 +13,6 @@ SWE30003_Book_Store_Website/
 │   └── architecture-style.md
 │
 ├── tests/
-│   ├── conftest.py
 │   ├── domain/
 │   │   ├── models/
 │   │   │   ├── test_user.py
@@ -25,6 +24,12 @@ SWE30003_Book_Store_Website/
 │   │   │   ├── test_order.py
 │   │   │   ├── test_invoice.py
 │   │   │   └── test_shipment.py
+│   │   ├── repositories/
+│   │   │   ├── test_admin_repository.py
+│   │   │   ├── test_book_repository.py
+│   │   │   ├── test_customer_repository.py
+│   │   │   ├── test_order_repository.py
+│   │   │   └── test_payment_gateway.py
 │   │   └── services/
 │   │       ├── test_auth_service.py
 │   │       ├── test_catalogue_service.py
@@ -33,18 +38,14 @@ SWE30003_Book_Store_Website/
 │   │       └── test_search_service.py
 │   ├── data/
 │   │   └── repositories/
-│   │       └── sqlite/
-│   │           ├── test_customer_repository.py
-│   │           ├── test_book_repository.py
-│   │           └── test_order_repository.py
+│   │       ├── test_customer_repository.py
+│   │       ├── test_book_repository.py
+│   │       └── test_order_repository.py
 │   └── presentation/
 │       └── routes/
 │           ├── test_auth_routes.py
 │           ├── test_catalogue_routes.py
-│           ├── test_order_routes.py
-│           └── api/
-│               ├── test_auth_api.py
-│               └── test_catalogue_api.py
+│           └── test_order_routes.py
 │
 └── src/
     ├── app.py
@@ -56,19 +57,9 @@ SWE30003_Book_Store_Website/
     │   │   └── data.json
     │   └── repositories/
     │       ├── __init__.py
-    │       ├── abstract/
-    │       │   ├── __init__.py
-    │       │   ├── customer_repository.py
-    │       │   ├── admin_repository.py
-    │       │   ├── book_repository.py
-    │       │   ├── order_repository.py
-    │       │   └── payment_gateway.py
-    │       └── sqlite/
-    │           ├── __init__.py
-    │           ├── customer_repository.py
-    │           ├── admin_repository.py
-    │           ├── book_repository.py
-    │           └── order_repository.py
+    │       ├── book_repository.py
+    │       ├── customer_repository.py
+    │       └── order_repository.py
     ├── domain/
     │   ├── __init__.py
     │   ├── models/
@@ -82,6 +73,13 @@ SWE30003_Book_Store_Website/
     │   │   ├── order.py
     │   │   ├── invoice.py
     │   │   └── shipment.py
+    │   ├── repositories/
+    │   │   ├── __init__.py
+    │   │   ├── admin_repository.py
+    │   │   ├── book_repository.py
+    │   │   ├── customer_repository.py
+    │   │   ├── order_repository.py
+    │   │   └── payment_gateway.py
     │   └── services/
     │       ├── __init__.py
     │       ├── auth_service.py
@@ -95,11 +93,7 @@ SWE30003_Book_Store_Website/
         │   ├── __init__.py
         │   ├── auth_routes.py
         │   ├── catalogue_routes.py
-        │   ├── order_routes.py
-        │   └── api/
-        │       ├── __init__.py
-        │       ├── auth_api.py
-        │       └── catalogue_api.py
+        │   └── order_routes.py
         ├── static/
         │   └── css/
         │       └── base.css
@@ -114,176 +108,76 @@ SWE30003_Book_Store_Website/
             └── register.html
 ```
 
----
-
 ## Architectural Foundation
 
-This project implements the three-layer Enterprise Architecture pattern.
-Each layer has a single, distinct responsibility:
+This project uses the layered architectural style, one of the Call-and-Return architectural styles. The system is decomposed into three layers. The presentation layer responds to HTTP requests, renders templates, and handles user interaction. The domain layer enforces business rules in plain Python, independent of any framework or database. The data layer performs all persistent storage operations and owns all database access.
 
-- Presentation: responds to user events, renders views, handles HTTP
-- Domain: enforces business rules entirely in plain Python (no Flask, no DB)
-- Data: performs CRUD operations, owns all database/JSON access
+The dependency rule is that presentation may call domain, and domain may call data. No layer may import from a layer above it. This constraint is what makes the style a true layered architecture rather than just a grouped folder structure.
 
-The strict dependency rule is Presentation to Domain to Data Source.
-No layer may import from a layer above it.
+The layered style was chosen because it directly addresses the quality attributes most critical to this system. It promotes modifiability, since the database backend can be replaced without touching business logic, and testability, since the domain layer can be tested in isolation without a running database or web server.
 
-By structuring the filesystem this way it makes managing this separation a bit
-easier. It also adds friction when moving between layers. If you find yourself
-reaching across directories to import something from a layer above, the file
-path alone signals that something is wrong.
-
-The domain layer never receives or returns database objects. All data passed
-upward to the presentation layer is serialised into plain dictionaries by the
-domain service. This means the presentation layer has no knowledge of the
-internal domain models and is unaffected by changes to them.
-
----
+The filesystem mirrors this structure intentionally. If you find yourself importing across layer boundaries in the wrong direction, the file path itself signals the violation.
 
 ## src/
 
-All application source code lives under src/. This is the standard src layout,
-which means Python resolves imports from src/ as the package root. This
-prevents import errors when running the project from different directories.
-
-The Python Packaging User Guide describes this benefit directly:
-
-"The src layout helps prevent accidental usage of the in-development copy of
-the code. This is relevant since the Python interpreter includes the current
-working directory as the first item on the import path."
-
-Python Packaging User Guide, src layout vs flat layout.
-https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/
-
----
+All application source code lives under `src/`. This separates runnable application code from project configuration, documentation, and tests.
 
 ## src/presentation/
 
-The presentation layer. Owns all HTTP concerns including routes, templates,
-and static assets. Nothing in this folder is imported by the domain or data
-layers.
+The presentation layer. It is the externally visible interface of the system and the only layer that interacts with Flask and the browser. Nothing in this folder is imported by the domain or data layers.
+
+This layer corresponds to the Process View in Kruchten's 4+1 model. It is the entry point for all runtime interactions initiated by a user.
 
 ### src/presentation/routes/
 
-Flask route handlers split by concern. This folder is divided into a general
-folder for HTML responses and an api/ subfolder for JSON responses.
-
-### src/presentation/routes/api/
-
-Route handlers for JSON responses. Separated from the HTML routes to make
-the distinction between browser and API consumers clear.
+Flask route handlers separated by functional concern. Each file groups the routes for one area of the system.
 
 ### src/presentation/templates/
 
-Jinja2 HTML templates for the browser-facing pages of the application.
+Jinja2 HTML templates for browser-facing pages.
 
 ### src/presentation/static/
 
 Static assets served directly to the browser.
 
----
-
 ## src/domain/
 
-The domain layer. Contains all business logic and business entities. Nothing
-in this folder imports from the presentation or data layers.
+The domain layer. It is the core abstraction of the system, existing independently of how data is stored or how users interact with it. Nothing here imports from the presentation or data layers.
+
+In terms of software abstraction levels, this layer operates at the level of components and objects. It defines what the system does without specifying how it is implemented at a storage or interface level.
 
 ### src/domain/models/
 
-The business entities of the system. Each file represents one concept from
-the domain model defined in Assignment 2. user.py is abstract and is the
-parent of customer.py and admin.py. This is an Is-Kind-Of relationship
-enforced through the folder by keeping all three together as a family of
-related types.
+The business entities of the system. Each file represents one concept from the domain model defined in Assignment 2.
+
+`user.py` is an abstract class and is the parent of `customer.py` and `admin.py`. This is an Is-Kind-Of (inheritance) relationship. Keeping all three together makes the class hierarchy visible in the filesystem.
+
+### src/domain/repositories/
+
+The specifications that define what persistent storage operations the domain requires. Each file defines the contract a concrete implementation must fulfil, without specifying how data is stored. Placing these in the domain layer reflects that they express a requirement of the domain, not a detail of storage.
 
 ### src/domain/services/
 
-One file per area of business logic. This folder maps directly to the
-controller classes identified in Assignment 2.
+One file per area of business logic. Each service encapsulates a cohesive set of responsibilities in the sense used by Responsibility-Driven Design, and collaborates with other services and the domain repository interfaces only.
 
----
+This folder maps directly to the controller classes identified in Assignment 2.
 
 ## src/data/
 
-The data layer. Owns all persistent data concerns. No other layer reads from
-or writes to the database directly.
+The data layer. It owns all persistent storage concerns. No other layer reads from or writes to the database directly.
 
 ### src/data/seeds/
 
-Seed data for populating the database in a development environment. Kept
-separate from the database itself to make clear this data is for development
-only.
+Initial data that populates the application on first run, including users, books, and other required records.
 
 ### src/data/repositories/
 
-The only way the domain layer accesses persistent data. This folder implements
-the Repository Pattern from Domain-Driven Design. It is divided into two
-subfolders to separate the contracts from the implementations.
-
-### src/data/repositories/abstract/
-
-Abstract base classes that define the contract each repository must fulfil.
-The domain layer imports exclusively from this folder. Keeping contracts in
-their own folder means the domain always has a stable target to import from
-regardless of which concrete backend is in use.
-
-If a new backend requires operations not present in the current contracts,
-this folder would need to change. This would invalidate all existing concrete
-implementations. In that case a team should fork this folder into a new
-contract folder rather than modifying the shared one, preserving the stability
-of existing implementations.
-
-### src/data/repositories/sqlite/
-
-Concrete SQLite implementations of the abstract contracts. If the project
-migrated to a different database, a new folder would be added alongside
-sqlite/ with its own implementations. The abstract folder and the domain
-layer would require no changes.
-
----
+Concrete implementations of the repository contracts defined in `src/domain/repositories/`. If the project migrated to a different database, the files in this folder would be replaced. The domain layer would require no changes.
 
 ## tests/
 
-Tests mirror the src/ structure exactly. No __init__.py files are needed.
-Pytest discovers tests by filename pattern and resolves imports from src/
-via pythonpath = ["src"] in pyproject.toml.
-
-### tests/domain/
-
-Tests for the domain layer.
-
-### tests/domain/models/
-
-Tests for each domain model.
-
-### tests/domain/services/
-
-Tests for each domain service.
-
-### tests/data/
-
-Tests for the data layer. Only the concrete sqlite/ folder has tests as the
-abstract folder has no logic to test.
-
-### tests/data/repositories/sqlite/
-
-Tests for the concrete SQLite repository implementations.
-
-### tests/presentation/
-
-Tests for the presentation layer.
-
-### tests/presentation/routes/
-
-Tests for the HTML route handlers.
-
-### tests/presentation/routes/api/
-
-Tests for the JSON API route handlers.
-
----
+Tests mirror the `src/` structure exactly. This makes it straightforward to identify which test file covers which source file and ensures each layer's tests remain independent of the others.
 
 ## docs/
 
-Project documentation. Kept separate from source code so documentation can
-be read and updated independently of the application.
+Project documentation. Kept separate from source code so it can be read and updated independently of the application.

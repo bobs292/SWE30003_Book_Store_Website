@@ -49,7 +49,7 @@ def login():
         if not all([name, password]):
             flash('Please fill in all fields.', 'error')
             return render_template('login.html')
-        with open('data/data.json', 'r', encoding='utf-8') as file:
+        with open('data/seeds/data.json', 'r', encoding='utf-8') as file:
             data = json.load(file)
 
 

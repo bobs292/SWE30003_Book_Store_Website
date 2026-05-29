@@ -8,7 +8,7 @@ decisions.
 
 ---
 
-## How to run:
+## How to install:
 
 Clone the repository and create a virtual environment.
 
@@ -25,7 +25,7 @@ pip install -e .
 
 ---
 
-## Running the Application
+## Running the web Application
 
 ```bash
 flask run

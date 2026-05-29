@@ -8,7 +8,7 @@ decisions.
 
 ---
 
-## Setup
+## How to run:
 
 Clone the repository and create a virtual environment.
 
@@ -41,13 +41,7 @@ hatch run pytest
 
 ## Setting Up for Development
 
-After cloning the repository, install the package in editable mode.
-
-```bash
-pip install -e .
-```
-
-This installs the project and all development dependencies including pytest,
+The pip command installs the project and all development dependencies including pytest,
 import-linter and pre-commit. It also makes all imports resolve from src/
 so you never need to modify your Python path manually.
 
@@ -75,8 +69,7 @@ they do, it prints exactly which file made the illegal import and which
 contract it broke.
 
 The check runs automatically when you commit. If a layer boundary is broken
-the commit is blocked and you will see output like this:
-
+the commit is blocked and you will see output.
 
 To explore the dependencie graphs run:
 ```bash

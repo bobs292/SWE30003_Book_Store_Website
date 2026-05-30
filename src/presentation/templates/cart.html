@@ -8,40 +8,58 @@
 
 {% block content %}
 <div class="page-header">
-  <h1>Your Cart</h1>
+  <div class="cart-header">
+    <h1>Your Cart</h1>
+  </div>
   <p>Review your items, update quantities, or remove books.</p>
 </div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  {% for category, message in messages %}
+  <div class="flash {{ category }}">
+    {{ message }}
+  </div>
+  {% endfor %}
+  {% endif %}
+{% endwith %}
 
 {% if cart_items %}
 <div class="cart-summary">
   <table class="cart-table">
     <thead>
       <tr>
+        <th class="cell-center">#</th>
         <th>Title</th>
-        <th>Price</th>
-        <th>Quantity</th>
-        <th>Line Total</th>
+        <th class="cell-center">Price</th>
+        <th class="cell-center">Quantity</th>
+        <th class="cell-center">Line Total</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
       {% for item in cart_items %}
       <tr>
+        <td class="cell-center">{{ loop.index }}</td>
         <td>
           <strong>{{ item.book.title }}</strong><br>
           <span class="meta">{{ item.book.author }}</span>
         </td>
-        <td>${{ '%.2f'|format(item.book.price) }}</td>
-        <td>
-          <form class="inline-form" method="post" action="{{ url_for('order.cart_update') }}">
+        <td class="cell-center"><span class="money">${{ '%.2f'|format(item.book.price) }}</span></td>
+        <td class="cell-center">
+          <form class="inline-form cart-qty-form" method="post" action="{{ url_for('order.cart_update') }}">
             <input type="hidden" name="book_id" value="{{ item.book.id }}">
-            <input type="number" name="quantity" min="0" max="{{ item.book.stock }}" value="{{ item.quantity }}">
+            <div class="qty-stepper">
+              <button type="button" class="qty-btn" data-action="decrease" aria-label="Decrease quantity">-</button>
+              <input type="number" name="quantity" min="0" max="{{ item.book.stock }}" value="{{ item.quantity }}">
+              <button type="button" class="qty-btn" data-action="increase" aria-label="Increase quantity">+</button>
+            </div>
             <button type="submit">Update</button>
           </form>
         </td>
-        <td>${{ '%.2f'|format(item.line_total) }}</td>
-        <td>
-          <form class="inline-form" method="post" action="{{ url_for('order.cart_remove') }}">
+        <td class="cell-center"><span class="money">${{ '%.2f'|format(item.line_total) }}</span></td>
+        <td class="cell-center">
+          <form class="inline-form" method="post" action="{{ url_for('order.cart_remove') }}" data-confirm="Remove this item from your cart?">
             <input type="hidden" name="book_id" value="{{ item.book.id }}">
             <button type="submit" class="danger">Remove</button>
           </form>
@@ -52,9 +70,15 @@
   </table>
 
   <div class="cart-totals">
-    <p><strong>Subtotal:</strong> ${{ '%.2f'|format(subtotal) }}</p>
+    <div class="subtotal-card">
+      <div>
+        <p class="subtotal-label">Subtotal</p>
+        <p class="subtotal-value">${{ '%.2f'|format(subtotal) }}</p>
+      </div>
+      <p class="subtotal-note">Taxes and shipping are calculated at checkout.</p>
+    </div>
     <div class="cart-actions">
-      <form method="post" action="{{ url_for('order.cart_clear') }}">
+      <form method="post" action="{{ url_for('order.cart_clear') }}" data-confirm="Clear all items from your cart?">
         <button type="submit" class="ghost">Clear cart</button>
       </form>
       <a class="primary" href="{{ url_for('order.checkout') }}">Proceed to checkout</a>
@@ -64,4 +88,79 @@
 {% else %}
 <p>Your cart is empty. Browse the <a href="{{ url_for('catalogue.catalogue_page') }}">catalogue</a> to add books.</p>
 {% endif %}
+
+<div id="confirm-modal" class="modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <h2 id="confirm-title">Confirm action</h2>
+    <p id="confirm-message"></p>
+    <div class="modal-actions">
+      <button type="button" class="ghost" id="confirm-no">Cancel</button>
+      <button type="button" class="danger" id="confirm-yes">Yes, continue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('.qty-btn');
+    if (!button) {
+      return;
+    }
+
+    const stepper = button.closest('.qty-stepper');
+    const input = stepper ? stepper.querySelector('input[type="number"]') : null;
+    if (!input) {
+      return;
+    }
+
+    const min = parseInt(input.min || '0', 10);
+    const max = parseInt(input.max || '999', 10);
+    const current = parseInt(input.value || min, 10);
+    const delta = button.dataset.action === 'increase' ? 1 : -1;
+    const next = current + delta;
+    input.value = Math.min(max, Math.max(min, next));
+  });
+
+  document.addEventListener('submit', (event) => {
+    const form = event.target.closest('form[data-confirm]');
+    if (!form) {
+      return;
+    }
+
+    event.preventDefault();
+    const message = form.getAttribute('data-confirm') || 'Are you sure?';
+    showConfirmModal(message, form);
+  });
+
+  const modal = document.getElementById('confirm-modal');
+  const modalMessage = document.getElementById('confirm-message');
+  const modalConfirm = document.getElementById('confirm-yes');
+  const modalCancel = document.getElementById('confirm-no');
+  let pendingForm = null;
+
+  function showConfirmModal(message, form) {
+    pendingForm = form;
+    modalMessage.textContent = message;
+    modal.classList.add('is-visible');
+  }
+
+  function closeConfirmModal() {
+    modal.classList.remove('is-visible');
+    pendingForm = null;
+  }
+
+  modalConfirm.addEventListener('click', () => {
+    if (pendingForm) {
+      pendingForm.submit();
+    }
+    closeConfirmModal();
+  });
+
+  modalCancel.addEventListener('click', closeConfirmModal);
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) {
+      closeConfirmModal();
+    }
+  });
+</script>
 {% endblock %}

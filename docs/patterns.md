@@ -24,6 +24,25 @@ never touches the database. The domain layer never touches Flask.
 
 ---
 
+## The Cart Flow
+
+The cart feature reads catalogue data through the domain service and stores
+the cart itself in the Flask session (presentation layer state).
+
+```
+Browser POST /cart/add
+    presentation/routes/order_routes.py         reads the form, validates qty
+    domain/services/catalogue_service.py        provides list of books
+    data/repositories/book_repository.py        loads books from JSON
+    presentation/routes/order_routes.py         updates session cart + flash
+```
+
+Cart update and removal follow the same route-first pattern, with the cart
+state kept in the session and catalogue data coming from the service. This
+keeps the data access in the data layer while the session remains a
+presentation concern.
+---
+
 ## Pattern 1: Abstract Base Class
 
 The abstract repository defines what operations must exist without saying how

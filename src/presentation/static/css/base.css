@@ -109,6 +109,21 @@ nav a.active {
 	margin-bottom: 8px;
 }
 
+.cart-header {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.cart-count-pill {
+	background: rgba(31, 111, 92, 0.12);
+	color: var(--brand-dark);
+	padding: 6px 12px;
+	border-radius: 999px;
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
 .page-header p {
 	color: var(--muted);
 	max-width: 640px;
@@ -231,6 +246,13 @@ nav a.active {
 	gap: 10px;
 }
 
+.cart-qty-form {
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+}
+
 .qty-control {
 	display: flex;
 	align-items: center;
@@ -244,6 +266,7 @@ nav a.active {
 .qty-stepper {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	border: 1px solid var(--line);
 	border-radius: 999px;
 	overflow: hidden;
@@ -253,7 +276,11 @@ nav a.active {
 	width: 52px;
 	border: none;
 	text-align: center;
-	padding: 6px 8px;
+	padding: 0;
+	height: 30px;
+	line-height: 30px;
+	margin: 0;
+	align-self: center;
 	font-weight: 600;
 }
 
@@ -270,6 +297,10 @@ nav a.active {
 	padding: 0;
 	font-size: 1rem;
 	box-shadow: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
 }
 
 .qty-btn:hover {
@@ -353,11 +384,29 @@ button:hover,
 .flash {
 	margin: 16px 0 8px;
 	padding: 12px 16px;
+	background: #fff4ce;
+	border: 1px solid #e8c765;
+	color: #6b4e00;
+	border-radius: 14px;
+	font-weight: 600;
+}
+
+.flash.success {
 	background: rgba(31, 111, 92, 0.12);
 	border: 1px solid rgba(31, 111, 92, 0.2);
 	color: var(--brand-dark);
-	border-radius: 14px;
-	font-weight: 600;
+}
+
+.flash.warning {
+	background: #fff4ce;
+	border: 1px solid #e8c765;
+	color: #6b4e00;
+}
+
+.flash.error {
+	background: rgba(156, 47, 47, 0.12);
+	border: 1px solid rgba(156, 47, 47, 0.2);
+	color: #8b2b2b;
 }
 
 .cart-summary {
@@ -378,7 +427,17 @@ button:hover,
 	padding: 14px 16px;
 	border-bottom: 1px solid var(--line);
 	text-align: left;
-	vertical-align: top;
+	vertical-align: middle;
+}
+
+.cart-table .cell-center {
+	text-align: center;
+	vertical-align: middle;
+}
+
+.money {
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
 }
 
 .cart-table th {
@@ -397,12 +456,86 @@ button:hover,
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	align-items: flex-start;
+	align-items: flex-end;
+}
+
+.subtotal-card {
+	align-self: flex-end;
+	text-align: right;
+}
+
+.subtotal-card {
+	background: #fff;
+	border: 1px solid var(--line);
+	border-radius: 16px;
+	padding: 16px 18px;
+	box-shadow: var(--shadow);
+	min-width: 260px;
+}
+
+.subtotal-label {
+	margin: 0;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-size: 0.75rem;
+	color: var(--muted);
+}
+
+.subtotal-value {
+	margin: 6px 0 8px;
+	font-size: 1.6rem;
+	font-weight: 700;
+}
+
+.subtotal-note {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.85rem;
 }
 
 .cart-actions {
 	display: flex;
 	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.modal {
+	position: fixed;
+	inset: 0;
+	background: rgba(20, 17, 12, 0.45);
+	display: none;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	backdrop-filter: blur(2px);
+	z-index: 50;
+}
+
+.modal.is-visible {
+	display: flex;
+}
+
+.modal-card {
+	background: #fff;
+	border-radius: 18px;
+	padding: 20px 22px;
+	max-width: 360px;
+	width: 100%;
+	box-shadow: 0 20px 50px rgba(20, 17, 12, 0.2);
+}
+
+.modal-card h2 {
+	margin: 0 0 8px;
+}
+
+.modal-card p {
+	margin: 0 0 16px;
+	color: var(--muted);
+}
+
+.modal-actions {
+	display: flex;
+	justify-content: flex-end;
 	gap: 12px;
 }
 

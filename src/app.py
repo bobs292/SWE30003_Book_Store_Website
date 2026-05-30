@@ -86,3 +86,7 @@ def create_app():
 # Calls create_app() to produce the Flask application instance that the
 # Flask dev server looks for when running flask run.
 app = create_app()
+
+
+if __name__ == '__main__':
+    app.run(debug=True)

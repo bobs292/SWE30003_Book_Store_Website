@@ -1,0 +1,2 @@
+Read through:
+https://martinfowler.com/bliki/PresentationDomainDataLayering.html#:~:text=Layering%20a%20system,of%20larger%20systems.&text=One%20of%20the,logic%20%28aka%20business&text=Layering%20a%20system,like%20Presentation%20Model.

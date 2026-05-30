@@ -1,0 +1,12 @@
+# PyCharm IDE files
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+
+# Environment
+venv/
+
+# Database (this is initialised on start)
+src/data/store.db

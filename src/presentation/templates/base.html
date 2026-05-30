@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Favourite Books</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+</head>
+
+<body>
+    <nav>
+        <div class="nav-left">
+            <a href="{{ url_for('homepage') }}" class="{% if request.endpoint == 'homepage' %}active{% endif %}">Home</a>
+            <a href="{{ url_for('catalogue.catalogue_page') }}" class="{% if request.endpoint == 'catalogue.catalogue_page' %}active{% endif %}">Catalogue</a>
+
+            <!-- change to when logged Out is visible -->
+            <a href="{{ url_for('auth.register') }}" class="{% if request.endpoint == 'auth.register' %}active{% endif %}">Register</a>
+            <a href="{{ url_for('auth.login') }}" class="{% if request.endpoint == 'auth.login' %}active{% endif %}">Login</a>
+            <!-- change to when logged in is visible-->
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+        </div>
+        <div class="nav-right">
+            <a href="{{ url_for('order.cart') }}" class="cart-link {% if request.endpoint == 'order.cart' %}active{% endif %}">
+                <span class="cart-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" role="img" focusable="false">
+                        <path d="M7 6h13l-2 8H8L6.7 4H3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <circle cx="9" cy="19" r="1.6" fill="currentColor"></circle>
+                        <circle cx="17" cy="19" r="1.6" fill="currentColor"></circle>
+                    </svg>
+                </span>
+                <span>Cart</span>
+                {% if cart_count and cart_count > 0 %}
+                <span class="cart-count">{{ cart_count }}</span>
+                {% endif %}
+            </a>
+        </div>
+    </nav>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

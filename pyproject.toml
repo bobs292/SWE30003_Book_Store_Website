@@ -1,0 +1,76 @@
+# Tells pip how to build this project as an installable package.
+# hatchling is the build backend used to package the src/ directory.
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Tells hatchling that the source code lives in src/.
+# Running pip install -e . makes all imports resolve from src/ as the package root.
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+# Project metadata and runtime dependencies.
+[project]
+name = "book-store-website"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "flask",
+]
+
+# Development dependencies available when running commands via hatch.
+# pytest is the test runner. import-linter enforces architectural import contracts.
+# pre-commit runs lint-imports automatically on every commit.
+[tool.hatch.envs.default]
+dependencies = [
+    "pytest",
+    "import-linter",
+    "import-linter[ui]",
+    "pre-commit",
+]
+
+# Tells pytest where to find tests and how to resolve imports.
+# pythonpath = ["src"] means test files can import from domain, data and presentation directly.
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+# Defines the root package for import-linter to analyse.
+[tool.importlinter]
+root_packages = ["src"]
+
+# Enforces the three-layer dependency rule at commit time.
+# These contracts mirror the strict dependency rule: Presentation -> Domain -> Data.
+# Any import that crosses a layer boundary in the wrong direction will fail the check.
+
+# Presentation must not reach into the data layer directly.
+# All data access must go through the domain services.
+[[tool.importlinter.contracts]]
+name = "Presentation cannot import from data"
+type = "forbidden"
+source_modules = ["src.presentation"]
+forbidden_modules = ["src.data"]
+
+# Domain must not reach into the data layer directly.
+# Domain services only reference abstract repository contracts in src.domain.repositories.
+[[tool.importlinter.contracts]]
+name = "Domain cannot import from data"
+type = "forbidden"
+source_modules = ["src.domain"]
+forbidden_modules = ["src.data"]
+
+# Domain must not reach into the presentation layer.
+# No domain code should know about Flask, routes or HTTP.
+[[tool.importlinter.contracts]]
+name = "Domain cannot import from presentation"
+type = "forbidden"
+source_modules = ["src.domain"]
+forbidden_modules = ["src.presentation"]
+
+# Data must not reach into the presentation layer.
+# Repositories only deal with persistence, never with HTTP concerns.
+[[tool.importlinter.contracts]]
+name = "Data cannot import from presentation"
+type = "forbidden"
+source_modules = ["src.data"]
+forbidden_modules = ["src.presentation"]

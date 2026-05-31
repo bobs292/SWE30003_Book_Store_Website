@@ -27,6 +27,9 @@ dependencies = [
     "import-linter",
     "import-linter[ui]",
     "pre-commit",
+    "pytest-flake8",
+    "flake8",
+    "flake8-pytest-style",
 ]
 
 # Tells pytest where to find tests and how to resolve imports.
@@ -34,6 +37,7 @@ dependencies = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+addopts = "--flake8"
 
 # Defines the root package for import-linter to analyse.
 [tool.importlinter]
@@ -74,3 +78,16 @@ name = "Data cannot import from presentation"
 type = "forbidden"
 source_modules = ["src.data"]
 forbidden_modules = ["src.presentation"]
+
+# Code style configuration
+[tool.black]
+line-length = 88
+target-version = ['py313']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]

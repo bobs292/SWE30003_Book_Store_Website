@@ -1,10 +1,10 @@
-import pytest
-import sqlite3
 import json
-import os
+import sqlite3
+
+import pytest
+
 import src.data.database as db_module
 from src.data.database import get_connection, init_db
-
 
 # ============================================================================
 # Fixtures
@@ -17,16 +17,17 @@ from src.data.database import get_connection, init_db
 # tmp_path is a pytest built-in that creates a fresh empty directory for
 # each test and cleans it up afterwards.
 
+
 @pytest.fixture(autouse=True)
 def isolated_db(monkeypatch, tmp_path):
     # Redirect DB_PATH and SEEDS_PATH away from the real files so every
     # test starts with a clean empty database and its own seed file.
     # autouse=True means this fixture runs automatically for every test in
     # this file without needing to list it as a parameter.
-    db_file = tmp_path / 'test.db'
-    seeds_file = tmp_path / 'data.json'
-    monkeypatch.setattr(db_module, 'DB_PATH', str(db_file))
-    monkeypatch.setattr(db_module, 'SEEDS_PATH', str(seeds_file))
+    db_file = tmp_path / "test.db"
+    seeds_file = tmp_path / "data.json"
+    monkeypatch.setattr(db_module, "DB_PATH", str(db_file))
+    monkeypatch.setattr(db_module, "SEEDS_PATH", str(seeds_file))
     return tmp_path
 
 
@@ -37,6 +38,7 @@ def isolated_db(monkeypatch, tmp_path):
 # to be accessed by name (row["email"]) instead of by position (row[0]).
 # If row_factory is not set, every repository would break whenever columns
 # are added or reordered in the schema.
+
 
 def test_get_connection_returns_connection():
     # get_connection should return a live sqlite3 connection object that
@@ -56,11 +58,11 @@ def test_get_connection_row_factory_allows_column_access_by_name():
     # without depending on any of the application tables existing.
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('CREATE TABLE t (a TEXT, b TEXT)')
-    cursor.execute('INSERT INTO t VALUES (?, ?)', ('hello', 'world'))
-    row = cursor.execute('SELECT * FROM t').fetchone()
-    assert row['a'] == 'hello'
-    assert row['b'] == 'world'
+    cursor.execute("CREATE TABLE t (a TEXT, b TEXT)")
+    cursor.execute("INSERT INTO t VALUES (?, ?)", ("hello", "world"))
+    row = cursor.execute("SELECT * FROM t").fetchone()
+    assert row["a"] == "hello"
+    assert row["b"] == "world"
     conn.close()
 
 
@@ -72,6 +74,7 @@ def test_get_connection_row_factory_allows_column_access_by_name():
 # These tests confirm the schema matches what the rest of the application
 # expects before any real data is inserted.
 
+
 def test_init_db_does_not_raise():
     # Confirms that every CREATE TABLE statement in init_db is valid SQL
     # and executes without error. If any statement has a syntax error or
@@ -81,7 +84,7 @@ def test_init_db_does_not_raise():
     try:
         init_db()
     except Exception as e:
-        pytest.fail(f'init_db raised an unexpected exception: {e}')
+        pytest.fail(f"init_db raised an unexpected exception: {e}")
 
 
 def test_init_db_creates_customers_table():
@@ -91,7 +94,9 @@ def test_init_db_creates_customers_table():
     init_db()
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='customers'")
+    cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND " "name='customers'"
+    )
     assert cursor.fetchone() is not None
     conn.close()
 
@@ -103,7 +108,9 @@ def test_init_db_creates_books_table():
     init_db()
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='books'")
+    cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND " "name='books'"
+    )
     assert cursor.fetchone() is not None
     conn.close()
 
@@ -120,7 +127,10 @@ def test_init_db_is_idempotent():
     init_db()
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+    cursor.execute(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND "
+        "name NOT LIKE 'sqlite_%'"
+    )
     count = cursor.fetchone()[0]
     conn.close()
     assert count == 2
@@ -134,12 +144,20 @@ def test_customers_table_has_expected_columns():
     init_db()
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('PRAGMA table_info(customers)')
-    columns = {row['name'] for row in cursor.fetchall()}
+    cursor.execute("PRAGMA table_info(customers)")
+    columns = {row["name"] for row in cursor.fetchall()}
     conn.close()
     expected = {
-        'customer_id', 'first_name', 'last_name', 'email',
-        'phone_number', 'password', 'street', 'suburb', 'state', 'postcode'
+        "customer_id",
+        "first_name",
+        "last_name",
+        "email",
+        "phone_number",
+        "password",
+        "street",
+        "suburb",
+        "state",
+        "postcode",
     }
     assert expected.issubset(columns)
 
@@ -152,12 +170,18 @@ def test_books_table_has_expected_columns():
     init_db()
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('PRAGMA table_info(books)')
-    columns = {row['name'] for row in cursor.fetchall()}
+    cursor.execute("PRAGMA table_info(books)")
+    columns = {row["name"] for row in cursor.fetchall()}
     conn.close()
     expected = {
-        'book_id', 'title', 'author', 'isbn',
-        'genre', 'description', 'price', 'stock'
+        "book_id",
+        "title",
+        "author",
+        "isbn",
+        "genre",
+        "description",
+        "price",
+        "stock",
     }
     assert expected.issubset(columns)
 
@@ -171,6 +195,7 @@ def test_books_table_has_expected_columns():
 # repository tests: one test for the lower bound, one for the upper bound,
 # and one confirming valid values are accepted.
 
+
 def _insert_book(conn, **overrides):
     # Helper that inserts a fully valid book with optional field overrides.
     # Centralising the defaults here means each test only needs to specify
@@ -178,19 +203,24 @@ def _insert_book(conn, **overrides):
     # **overrides uses Python's keyword argument unpacking so callers can
     # write _insert_book(conn, title='') to test an empty title.
     defaults = dict(
-        title='Test Book',
-        author='Test Author',
-        isbn='9780000000001',
-        genre='Fiction',
-        description='A test book.',
+        title="Test Book",
+        author="Test Author",
+        isbn="9780000000001",
+        genre="Fiction",
+        description="A test book.",
         price=10.0,
         stock=5,
     )
     defaults.update(overrides)
-    conn.execute('''
-        INSERT INTO books (title, author, isbn, genre, description, price, stock)
-        VALUES (:title, :author, :isbn, :genre, :description, :price, :stock)
-    ''', defaults)
+    conn.execute(
+        """
+        INSERT INTO books (title, author, isbn, genre, description,
+        price, stock)
+        VALUES (:title, :author, :isbn, :genre, :description,
+        :price, :stock)
+    """,
+        defaults,
+    )
     conn.commit()
 
 
@@ -200,7 +230,7 @@ def test_book_title_empty_raises(isolated_db):
     init_db()
     conn = get_connection()
     with pytest.raises(sqlite3.IntegrityError):
-        _insert_book(conn, title='')
+        _insert_book(conn, title="")
     conn.close()
 
 
@@ -210,7 +240,7 @@ def test_book_title_over_limit_raises(isolated_db):
     init_db()
     conn = get_connection()
     with pytest.raises(sqlite3.IntegrityError):
-        _insert_book(conn, title='A' * 201)
+        _insert_book(conn, title="A" * 201)
     conn.close()
 
 
@@ -220,7 +250,7 @@ def test_book_author_empty_raises(isolated_db):
     init_db()
     conn = get_connection()
     with pytest.raises(sqlite3.IntegrityError):
-        _insert_book(conn, author='')
+        _insert_book(conn, author="")
     conn.close()
 
 
@@ -229,7 +259,7 @@ def test_book_author_over_limit_raises(isolated_db):
     init_db()
     conn = get_connection()
     with pytest.raises(sqlite3.IntegrityError):
-        _insert_book(conn, author='A' * 201)
+        _insert_book(conn, author="A" * 201)
     conn.close()
 
 
@@ -250,8 +280,8 @@ def test_book_price_zero_is_valid(isolated_db):
     conn = get_connection()
     _insert_book(conn, price=0.0)
     cursor = conn.cursor()
-    cursor.execute('SELECT price FROM books WHERE title = ?', ('Test Book',))
-    assert cursor.fetchone()['price'] == 0.0
+    cursor.execute("SELECT price FROM books WHERE title = ?", ("Test Book",))
+    assert cursor.fetchone()["price"] == 0.0
     conn.close()
 
 
@@ -272,8 +302,8 @@ def test_book_stock_zero_is_valid(isolated_db):
     conn = get_connection()
     _insert_book(conn, stock=0)
     cursor = conn.cursor()
-    cursor.execute('SELECT stock FROM books WHERE title = ?', ('Test Book',))
-    assert cursor.fetchone()['stock'] == 0
+    cursor.execute("SELECT stock FROM books WHERE title = ?", ("Test Book",))
+    assert cursor.fetchone()["stock"] == 0
     conn.close()
 
 
@@ -284,11 +314,9 @@ def test_book_isbn_null_is_valid(isolated_db):
     conn = get_connection()
     _insert_book(conn, isbn=None)
     cursor = conn.cursor()
-    cursor.execute('SELECT isbn FROM books WHERE title = ?', ('Test Book',))
-    assert cursor.fetchone()['isbn'] is None
+    cursor.execute("SELECT isbn FROM books WHERE title = ?", ("Test Book",))
+    assert cursor.fetchone()["isbn"] is None
     conn.close()
-
-
 
 
 def test_book_valid_insert_succeeds(isolated_db):
@@ -299,7 +327,7 @@ def test_book_valid_insert_succeeds(isolated_db):
     conn = get_connection()
     _insert_book(conn)
     cursor = conn.cursor()
-    cursor.execute('SELECT COUNT(*) FROM books')
+    cursor.execute("SELECT COUNT(*) FROM books")
     assert cursor.fetchone()[0] == 1
     conn.close()
 
@@ -312,62 +340,65 @@ def test_book_valid_insert_succeeds(isolated_db):
 # _seed_books is called inside init_db so all these tests call init_db
 # after writing seed data to the temporary SEEDS_PATH.
 
+
 def test_seed_books_populates_table_on_first_run(isolated_db):
     # When the books table is empty and data.json exists, init_db should
     # insert all books from the seed file. This test writes two books to
     # the seed file and checks that both appear in the database after init_db.
     seed_data = {
-        'books': [
+        "books": [
             {
-                'title': 'Seed Book One',
-                'author': 'Author A',
-                'isbn': '9780000000001',
-                'genre': 'Fiction',
-                'description': 'First seed book.',
-                'price': 15.0,
-                'stock': 3,
+                "title": "Seed Book One",
+                "author": "Author A",
+                "isbn": "9780000000001",
+                "genre": "Fiction",
+                "description": "First seed book.",
+                "price": 15.0,
+                "stock": 3,
             },
             {
-                'title': 'Seed Book Two',
-                'author': 'Author B',
-                'isbn': '9780000000002',
-                'genre': 'Nonfiction',
-                'description': 'Second seed book.',
-                'price': 20.0,
-                'stock': 7,
+                "title": "Seed Book Two",
+                "author": "Author B",
+                "isbn": "9780000000002",
+                "genre": "Nonfiction",
+                "description": "Second seed book.",
+                "price": 20.0,
+                "stock": 7,
             },
         ]
     }
-    with open(db_module.SEEDS_PATH, 'w', encoding='utf-8') as f:
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
         json.dump(seed_data, f)
 
     init_db()
 
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT COUNT(*) FROM books')
+    cursor.execute("SELECT COUNT(*) FROM books")
     assert cursor.fetchone()[0] == 2
     conn.close()
 
 
 def test_seed_books_does_not_duplicate_on_second_run(isolated_db):
     # Calling init_db a second time when the books table already has rows
-    # should not insert anything. Without this guard every app restart
-    # would add duplicate books to the catalogue.
+    # should not insert duplicates. The seed function now checks by ISBN,
+    # so books already in the database (matched by ISBN) are skipped.
+    # Books without an ISBN are always inserted since there's no key to
+    # match against.
     seed_data = {
-        'books': [
+        "books": [
             {
-                'title': 'Seed Book',
-                'author': 'Author A',
-                'isbn': None,
-                'genre': 'Fiction',
-                'description': '',
-                'price': 10.0,
-                'stock': 1,
+                "title": "Seed Book",
+                "author": "Author A",
+                "isbn": "9780000000001",
+                "genre": "Fiction",
+                "description": "",
+                "price": 10.0,
+                "stock": 1,
             }
         ]
     }
-    with open(db_module.SEEDS_PATH, 'w', encoding='utf-8') as f:
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
         json.dump(seed_data, f)
 
     init_db()
@@ -375,7 +406,7 @@ def test_seed_books_does_not_duplicate_on_second_run(isolated_db):
 
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT COUNT(*) FROM books')
+    cursor.execute("SELECT COUNT(*) FROM books")
     assert cursor.fetchone()[0] == 1
     conn.close()
 
@@ -387,7 +418,7 @@ def test_seed_books_handles_missing_seed_file(isolated_db):
     init_db()
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT COUNT(*) FROM books')
+    cursor.execute("SELECT COUNT(*) FROM books")
     assert cursor.fetchone()[0] == 0
     conn.close()
 
@@ -397,33 +428,33 @@ def test_seed_books_stores_correct_values(isolated_db):
     # in data.json. This catches any field mapping errors in the INSERT
     # statement, for example if isbn and genre were accidentally swapped.
     seed_data = {
-        'books': [
+        "books": [
             {
-                'title': 'Verified Book',
-                'author': 'Verified Author',
-                'isbn': '9780000000099',
-                'genre': 'Mystery',
-                'description': 'A verified description.',
-                'price': 19.99,
-                'stock': 4,
+                "title": "Verified Book",
+                "author": "Verified Author",
+                "isbn": "9780000000099",
+                "genre": "Mystery",
+                "description": "A verified description.",
+                "price": 19.99,
+                "stock": 4,
             }
         ]
     }
-    with open(db_module.SEEDS_PATH, 'w', encoding='utf-8') as f:
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
         json.dump(seed_data, f)
 
     init_db()
 
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM books WHERE title = ?', ('Verified Book',))
+    cursor.execute("SELECT * FROM books WHERE title = ?", ("Verified Book",))
     row = cursor.fetchone()
     conn.close()
 
-    assert row['title'] == 'Verified Book'
-    assert row['author'] == 'Verified Author'
-    assert row['isbn'] == '9780000000099'
-    assert row['genre'] == 'Mystery'
-    assert row['description'] == 'A verified description.'
-    assert row['price'] == 19.99
-    assert row['stock'] == 4
+    assert row["title"] == "Verified Book"
+    assert row["author"] == "Verified Author"
+    assert row["isbn"] == "9780000000099"
+    assert row["genre"] == "Mystery"
+    assert row["description"] == "A verified description."
+    assert row["price"] == 19.99
+    assert row["stock"] == 4

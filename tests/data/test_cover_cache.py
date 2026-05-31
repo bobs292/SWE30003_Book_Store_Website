@@ -1,8 +1,5 @@
-import os
 import urllib.error
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from src.data.cover_cache import cache_covers
 
@@ -67,8 +64,8 @@ class TestCacheCovers:
 
         with patch("src.data.cover_cache._fetch_and_save") as mock_fetch:
             cache_covers([{"isbn": isbn}], str(cache_dir))
-            mock_fetch.assert_not_called()
 
+        mock_fetch.assert_not_called()
         assert existing_file.read_bytes() == b"existing_data"
 
     def test_missing_isbn_skipped_silently(self, tmp_path):
@@ -78,7 +75,8 @@ class TestCacheCovers:
 
         with patch("src.data.cover_cache._fetch_and_save") as mock_fetch:
             cache_covers([{"title": "No ISBN Book"}], str(cache_dir))
-            mock_fetch.assert_not_called()
+
+        mock_fetch.assert_not_called()
 
     def test_network_error_handled_gracefully(self, tmp_path):
         # Network failures during fetching must not propagate uncaught.

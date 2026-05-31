@@ -8,7 +8,7 @@ decisions.
 
 ---
 
-## How to install:
+## How to Install
 
 Clone the repository and create a virtual environment.
 
@@ -28,25 +28,31 @@ pip install -e .
 ## Running the web Application
 
 ```bash
+cd src
 flask run
 ```
 
 ---
 
 ## Running Tests
-
+The test suite includes unit tests, integration tests, and code style checks.
 ```bash
 hatch run pytest
 ```
+This runs:
 
+    All unit and integration tests
+    Code style checks via flake8 (formatting, linting, and pytest-specific style)
+    Architectural import contract verification
+To run tests without code style checks:
+```bash
+hatch run pytest -p no:flake8
+```
 ## Setting Up for Development
-
 The pip command installs the project and all development dependencies including pytest,
-import-linter and pre-commit. It also makes all imports resolve from src/
-so you never need to modify your Python path manually.
-
+import-linter, pre-commit, pytest-flake8, flake8, black, and isort. It also makes
+all imports resolve from src/ so you never need to modify your Python path manually.
 Next, install the pre-commit hooks.
-
 ```bash
 hatch run pre-commit install
 ```

@@ -1,5 +1,4 @@
 import subprocess
-import sys
 
 # ============================================================================
 # Architecture tests
@@ -24,13 +23,7 @@ def test_import_contracts_are_all_kept():
     # using. subprocess.run executes it as a separate process and captures
     # the output. We check the return code: 0 means all contracts passed,
     # anything else means at least one contract was broken.
-    result = subprocess.run(
-        ['lint-imports'],
-        capture_output=True,
-        text=True
-    )
+    result = subprocess.run(["lint-imports"], capture_output=True, text=True)
     assert result.returncode == 0, (
-        "One or more import contracts are broken.\n\n"
-        + result.stdout
-        + result.stderr
+        "One or more import contracts are broken.\n\n" + result.stdout + result.stderr
     )

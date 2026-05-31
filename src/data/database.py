@@ -1,9 +1,15 @@
 import sqlite3
 import os
+import json
+from src.data.cover_cache import cache_covers
 
 # Resolves the path to store.db relative to this file.
 # All repositories import get_connection() from here rather than hardcoding this path.
 DB_PATH = os.path.join(os.path.dirname(__file__), 'store.db')
+
+# Resolves the path to the seed file relative to this file.
+# The seed file is read once on first run to populate the books table.
+SEEDS_PATH = os.path.join(os.path.dirname(__file__), 'seeds', 'data.json')
 
 
 def get_connection():
@@ -14,9 +20,11 @@ def get_connection():
     return conn
 
 
-def init_db():
+def init_db(cover_cache_dir=None):
     # Creates all tables if they do not already exist.
     # Called once on startup from app.py.
+    # cover_cache_dir is the absolute path to the folder where cover images should be cached.
+    # If None, cover caching is skipped.
     # Add new CREATE TABLE statements here as new entities are implemented.
     conn = get_connection()
     cursor = conn.cursor()
@@ -40,5 +48,66 @@ def init_db():
         )
     ''')
 
+    # Books table stores catalogue metadata for each title sold in the store.
+    # isbn is stored as a business attribute identifying the specific edition.
+    # isbn also serves as the key for fetching cover images from the Open Library
+    # Covers API at https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg.
+    # The cover URL is derived in the repository at query time and is never stored here.
+    # price must be zero or positive. stock must be zero or positive.
+    # title and author must be at least 1 character and no more than 200 characters.
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS books (
+            book_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            title        TEXT NOT NULL CHECK(length(title) >= 1 AND length(title) <= 200),
+            author       TEXT NOT NULL CHECK(length(author) >= 1 AND length(author) <= 200),
+            isbn         TEXT CHECK(isbn IS NULL OR length(isbn) >= 1),
+            genre        TEXT NOT NULL DEFAULT 'General' CHECK(length(genre) >= 1 AND length(genre) <= 100),
+            description  TEXT NOT NULL DEFAULT '' CHECK(length(description) >= 0),
+            price        REAL NOT NULL CHECK(price >= 0),
+            stock        INTEGER NOT NULL DEFAULT 0 CHECK(stock >= 0)
+        )
+    ''')
+
     conn.commit()
+    _seed_books(conn, cover_cache_dir)
     conn.close()
+
+
+def _seed_books(conn, cover_cache_dir=None):
+    # Inserts book records from data.json if the books table is empty.
+    # This runs on every startup but only inserts when the table has no rows,
+    # so it is safe to call repeatedly without duplicating data.
+    # After inserting, fetches and caches cover images if cover_cache_dir is provided.
+    cursor = conn.cursor()
+    cursor.execute('SELECT COUNT(*) FROM books')
+    if cursor.fetchone()[0] > 0:
+        return
+
+    if not os.path.exists(SEEDS_PATH):
+        return
+
+    with open(SEEDS_PATH, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    books = data.get('books', [])
+    for book in books:
+        cursor.execute('''
+            INSERT INTO books (title, author, isbn, genre, description, price, stock)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            book.get('title', ''),
+            book.get('author', ''),
+            book.get('isbn'),
+            book.get('genre', 'General'),
+            book.get('description', ''),
+            book.get('price', 0.0),
+            book.get('stock', 0),
+        ))
+
+    conn.commit()
+
+    if cover_cache_dir and books:
+        # Fetch and cache cover images from Open Library for all seeded books.
+        # This runs once when the table is first populated. On subsequent startups
+        # the files already exist so no requests are made to Open Library.
+        cache_covers(books, cover_cache_dir)

@@ -1,4 +1,5 @@
 # Flask is the web framework. render_template renders HTML templates from the templates folder.
+import os
 from flask import Flask, render_template, session
 
 # init_db creates the database tables on startup.
@@ -14,7 +15,7 @@ from src.domain.services.auth_service import AuthService
 from src.domain.services.catalogue_service import CatalogueService
 
 # Concrete repository for loading books from JSON.
-from src.data.repositories.book_repository import JsonBookRepository
+from src.data.repositories.book_repository import SqliteBookRepository
 
 # Factory functions that create blueprints with services injected.
 from src.presentation.routes.auth_routes import create_auth_routes
@@ -35,7 +36,10 @@ def create_app():
 
     # Runs once on startup. Creates the database file and all tables if they
     # do not already exist. Does nothing if they are already there.
-    init_db()
+    # The cover cache directory is passed in so the data layer can save images
+    # without knowing anything about Flask's static folder structure.
+    cover_cache_dir = os.path.join(os.path.dirname(__file__), 'presentation', 'static', 'images', 'covers')
+    init_db(cover_cache_dir)
 
     # Instantiates the SQLite customer repository, creating a live object
     # from the class blueprint that can run queries against the database.
@@ -47,7 +51,7 @@ def create_app():
     auth_service = AuthService(customer_repo)
 
     # Creates the catalogue service by injecting the JSON book repository.
-    book_repo = JsonBookRepository()
+    book_repo = SqliteBookRepository()
     catalogue_service = CatalogueService(book_repo)
 
     # Creates the auth routes with the auth service injected, then registers

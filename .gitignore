@@ -10,3 +10,4 @@ venv/
 
 # Database (this is initialised on start)
 src/data/store.db
+src/presentation/static/images/covers/

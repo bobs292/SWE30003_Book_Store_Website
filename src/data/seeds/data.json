@@ -1,124 +1,112 @@
 {
-	"books": [
-		{
-			"id": 1,
-			"title": "The Silent Reader",
-			"author": "A. Harper",
-			"genre": "Mystery",
-			"description": "A quiet librarian uncovers a coded diary that connects a missing author to a decades-old case.",
-			"price": 24.99,
-			"stock": 8,
-			"cover_color": "#9fb8ad"
-		},
-		{
-			"id": 2,
-			"title": "Midnight Letters",
-			"author": "L. Chen",
-			"genre": "Historical Fiction",
-			"description": "A bundle of wartime letters reveals a love story that reshapes a family's present.",
-			"price": 19.5,
-			"stock": 12,
-			"cover_color": "#c9a27a"
-		},
-		{
-			"id": 3,
-			"title": "Garden of Pages",
-			"author": "M. Patel",
-			"genre": "Literary Fiction",
-			"description": "Three neighbors restore a forgotten greenhouse and uncover a notebook that binds their lives.",
-			"price": 29.0,
-			"stock": 5,
-			"cover_color": "#7fa88d"
-		},
-		{
-			"id": 4,
-			"title": "Signals in the Stacks",
-			"author": "R. Gomez",
-			"genre": "Science Fiction",
-			"description": "A radio archivist hears a signal from deep space that was never meant for Earth.",
-			"price": 22.75,
-			"stock": 0,
-			"cover_color": "#7183a0"
-		},
-		{
-			"id": 5,
-			"title": "Paper Lanterns",
-			"author": "K. Howard",
-			"genre": "Contemporary",
-			"description": "A community festival in a coastal town pulls old friends back together for one more season.",
-			"price": 18.4,
-			"stock": 9,
-			"cover_color": "#e3b07a"
-		},
-		{
-			"id": 6,
-			"title": "Harbor of Stories",
-			"author": "S. Wright",
-			"genre": "Adventure",
-			"description": "A maritime historian follows a trail of maps across the Pacific to find a vanished ship.",
-			"price": 27.25,
-			"stock": 7,
-			"cover_color": "#4f7b8b"
-		},
-		{
-			"id": 7,
-			"title": "The Brass Bookmark",
-			"author": "E. Flores",
-			"genre": "Fantasy",
-			"description": "An apprentice bookbinder discovers a relic that lets her step into the stories she repairs.",
-			"price": 21.6,
-			"stock": 4,
-			"cover_color": "#b08968"
-		},
-		{
-			"id": 8,
-			"title": "Atlas of Echoes",
-			"author": "N. Rivers",
-			"genre": "Speculative",
-			"description": "A cartographer charts the memories of a floating city as it drifts across a shifting ocean.",
-			"price": 31.0,
-			"stock": 6,
-			"cover_color": "#5f7aa8"
-		},
-		{
-			"id": 9,
-			"title": "Morning on the Shelf",
-			"author": "D. Clarke",
-			"genre": "Nonfiction",
-			"description": "A practical guide to building a calm reading ritual and reclaiming focus in a busy world.",
-			"price": 16.95,
-			"stock": 14,
-			"cover_color": "#c6bfa4"
-		},
-		{
-			"id": 10,
-			"title": "Ink and Orchard",
-			"author": "T. Nguyen",
-			"genre": "Romance",
-			"description": "A chef and a poet rebuild an old orchard into a cafe and discover a second chance.",
-			"price": 23.2,
-			"stock": 3,
-			"cover_color": "#d89c8f"
-		},
-		{
-			"id": 11,
-			"title": "Starlight Bindery",
-			"author": "P. Singh",
-			"genre": "Fantasy",
-			"description": "A bindery that works by starlight prepares a final volume to protect the city from a storm.",
-			"price": 26.8,
-			"stock": 10,
-			"cover_color": "#7c6fb3"
-		},
-		{
-			"id": 12,
-			"title": "The Quiet Index",
-			"author": "J. Morris",
-			"genre": "Mystery",
-			"description": "A cataloger finds a shelf of unlisted titles that point to a hidden set of patrons.",
-			"price": 20.0,
-			"stock": 11,
-			"cover_color": "#8b948c"
-		}
-	]
+    "books": [
+        {
+            "title": "Gone Girl",
+            "author": "Gillian Flynn",
+            "isbn": "9780307588371",
+            "genre": "Mystery",
+            "description": "On the morning of their fifth wedding anniversary, Nick Dunne's wife Amy disappears. Under pressure from the police and media, secrets about their marriage begin to unravel.",
+            "price": 19.99,
+            "stock": 8
+        },
+        {
+            "title": "The Pillars of the Earth",
+            "author": "Ken Follett",
+            "isbn": "9780451166890",
+            "genre": "Historical Fiction",
+            "description": "Set in twelfth-century England, this sweeping tale follows the building of a cathedral and the lives it shapes across generations of war, passion, and treachery.",
+            "price": 24.99,
+            "stock": 5
+        },
+        {
+            "title": "Normal People",
+            "author": "Sally Rooney",
+            "isbn": "9780571334650",
+            "genre": "Literary Fiction",
+            "description": "Connell and Marianne grow up in the same small town in Ireland but belong to different worlds. A story about the unexpected ways people affect one another's lives.",
+            "price": 22.99,
+            "stock": 12
+        },
+        {
+            "title": "The Martian",
+            "author": "Andy Weir",
+            "isbn": "9780553418026",
+            "genre": "Science Fiction",
+            "description": "An astronaut becomes stranded alone on Mars and must use his ingenuity and scientific knowledge to survive while NASA works on a rescue mission.",
+            "price": 18.99,
+            "stock": 0
+        },
+        {
+            "title": "Eleanor Oliphant is Completely Fine",
+            "author": "Gail Honeyman",
+            "isbn": "9780735220690",
+            "genre": "Contemporary",
+            "description": "Eleanor Oliphant leads a structured life with very little to trouble her. That is, until she meets Raymond and everything changes.",
+            "price": 17.99,
+            "stock": 9
+        },
+        {
+            "title": "Into the Wild",
+            "author": "Jon Krakauer",
+            "isbn": "9780385486804",
+            "genre": "Adventure",
+            "description": "The true story of Christopher McCandless, who gave away his savings and hitchhiked to Alaska to live alone in the wilderness.",
+            "price": 20.99,
+            "stock": 7
+        },
+        {
+            "title": "The Name of the Wind",
+            "author": "Patrick Rothfuss",
+            "isbn": "9780756404079",
+            "genre": "Fantasy",
+            "description": "The tale of Kvothe, a legendary figure in his own time, told in his own words from his youth through his rise from street urchin to master arcanist.",
+            "price": 21.99,
+            "stock": 4
+        },
+        {
+            "title": "Station Eleven",
+            "author": "Emily St. John Mandel",
+            "isbn": "9780385353304",
+            "genre": "Speculative",
+            "description": "A post-pandemic world where a travelling Shakespeare company moves through the remnants of civilisation, intertwined with the story of the world before the collapse.",
+            "price": 23.99,
+            "stock": 6
+        },
+        {
+            "title": "Sapiens",
+            "author": "Yuval Noah Harari",
+            "isbn": "9780062316097",
+            "genre": "Nonfiction",
+            "description": "A brief history of humankind from the Stone Age to the twenty-first century, exploring how biology and history have defined us.",
+            "price": 26.99,
+            "stock": 14
+        },
+        {
+            "title": "The Notebook",
+            "author": "Nicholas Sparks",
+            "isbn": "9780446605236",
+            "genre": "Romance",
+            "description": "An elderly man reads to a woman with dementia from a notebook containing the story of two young lovers separated by the differences in their worlds.",
+            "price": 16.99,
+            "stock": 3
+        },
+        {
+            "title": "The Way of Kings",
+            "author": "Brandon Sanderson",
+            "isbn": "9780765326355",
+            "genre": "Fantasy",
+            "description": "A world of storms, soldiers, and scholars, where a war is being fought across the shattered landscape of the Shattered Plains and ancient powers begin to stir.",
+            "price": 29.99,
+            "stock": 10
+        },
+        {
+            "title": "Big Little Lies",
+            "author": "Liane Moriarty",
+            "isbn": "9780399167065",
+            "genre": "Mystery",
+            "description": "Three women, three marriages, three secrets. A darkly comic tale of school politics, petty rivalries, and a murder at a trivia night.",
+            "price": 19.50,
+            "stock": 11
+        }
+    ]
 }

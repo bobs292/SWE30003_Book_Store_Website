@@ -87,10 +87,10 @@ hatch run pytest -p no:flake8
 
 ## Setting Up for Development
 
-The `pip install -e .` command installs the project and all development
+The `pip install -e .` command installs the project.It also makes all imports resolve from `src/` so
+you never need to modify your Python path manually. All development
 dependencies including pytest, import-linter, pre-commit, pytest-flake8,
-flake8, black, and isort. It also makes all imports resolve from `src/` so
-you never need to modify your Python path manually.
+flake8, black, and isort are handled by hatch. 
 
 Next, install the pre-commit hooks.
 

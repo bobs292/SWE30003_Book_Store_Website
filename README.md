@@ -34,6 +34,35 @@ flask run
 
 ---
 
+## Running in a Container
+
+The app ships with a `Dockerfile`, so it can be built and run with either
+Docker or Podman. On first start the container creates its SQLite database
+and fetches book covers from Open Library, so the initial launch needs
+network access and takes a few seconds longer. Data lives inside the
+container and resets when it stops (it re-seeds on the next run).
+
+### Docker
+
+```bash
+docker build -t favourite-books .
+docker run --rm -p 8000:8000 favourite-books
+```
+
+### Podman
+
+Podman's CLI is a drop-in replacement for Docker and uses the same
+`Dockerfile`, so the commands are identical apart from the name:
+
+```bash
+podman build -t favourite-books .
+podman run --rm -p 8000:8000 favourite-books
+```
+
+Either way, open http://localhost:8000 once it starts.
+
+---
+
 ## Running Tests
 
 The test suite includes unit tests, integration tests, and code style checks.

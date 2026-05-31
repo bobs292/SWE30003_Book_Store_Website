@@ -1,0 +1,9 @@
+.git
+.venv
+__pycache__/
+*.pyc
+.grimp_cache/
+.import_linter_cache/
+src/data/store.db
+src/presentation/static/images/covers/
+.github/

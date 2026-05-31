@@ -1,6 +1,7 @@
 import os
-from src.domain.repositories.book_repository import BookRepository
+
 from src.data.database import get_connection
+from src.domain.repositories.book_repository import BookRepository
 
 
 class SqliteBookRepository(BookRepository):
@@ -11,7 +12,7 @@ class SqliteBookRepository(BookRepository):
         # routes expect.
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM books')
+        cursor.execute("SELECT * FROM books")
         rows = cursor.fetchall()
         conn.close()
         return [self._row_to_dict(row) for row in rows]
@@ -20,7 +21,7 @@ class SqliteBookRepository(BookRepository):
         # Returns a single book by its id, or None if it does not exist.
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT * FROM books WHERE book_id = ?', (book_id,))
+        cursor.execute("SELECT * FROM books WHERE book_id = ?", (book_id,))
         row = cursor.fetchone()
         conn.close()
         if row is None:
@@ -35,7 +36,7 @@ class SqliteBookRepository(BookRepository):
         # Covers API. isbn remains in the database as a business attribute
         # identifying the specific edition. If isbn is null, cover_url is None
         # and the template falls back to a placeholder.
-        isbn = row['isbn']
+        isbn = row["isbn"]
         # Use the locally cached cover if it exists.
         # The cache is populated at seed time by cover_cache.py.
         # If the file does not exist the template falls back to a placeholder.
@@ -48,20 +49,30 @@ class SqliteBookRepository(BookRepository):
             # This relative construction keeps the path correct regardless
             # of where the project is cloned on disk.
             cache_path = os.path.join(
-                os.path.dirname(__file__), '..', '..',
-                'presentation', 'static', 'images', 'covers', f'{isbn}.jpg'
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "presentation",
+                "static",
+                "images",
+                "covers",
+                f"{isbn}.jpg",
             )
-            cover_url = f'/static/images/covers/{isbn}.jpg' if os.path.exists(cache_path) else None
+            cover_url = (
+                f"/static/images/covers/{isbn}.jpg"
+                if os.path.exists(cache_path)
+                else None
+            )
         else:
             cover_url = None
         return {
-            'id': row['book_id'],
-            'title': row['title'],
-            'author': row['author'],
-            'isbn': isbn,
-            'genre': row['genre'],
-            'description': row['description'],
-            'cover_url': cover_url,
-            'price': row['price'],
-            'stock': row['stock'],
+            "id": row["book_id"],
+            "title": row["title"],
+            "author": row["author"],
+            "isbn": isbn,
+            "genre": row["genre"],
+            "description": row["description"],
+            "cover_url": cover_url,
+            "price": row["price"],
+            "stock": row["stock"],
         }

@@ -1,13 +1,13 @@
 import os
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 
 # URL pattern for the Open Library Covers API.
 # {isbn} is replaced with the book's ISBN-13. M is medium size.
 # This is only called once per book, at seed time, and the result is cached
 # locally.
-_OPEN_LIBRARY_URL = 'https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg'
+_OPEN_LIBRARY_URL = "https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg"
 
 # Minimum file size in bytes to consider a cover valid.
 # Open Library returns a 1x1 pixel blank image (around 43 bytes) when no cover
@@ -26,9 +26,7 @@ _MIN_COVER_BYTES = 1000
 # subprocess with curl because urllib requires no external dependencies, works
 # identically across Windows, macOS and Linux, and eliminates shell-escaping
 # and injection risks.
-_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (compatible; FavouriteBooks/1.0)'
-}
+_HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; FavouriteBooks/1.0)"}
 
 
 def cache_covers(books, cache_dir):
@@ -44,12 +42,12 @@ def cache_covers(books, cache_dir):
     os.makedirs(cache_dir, exist_ok=True)
 
     for book in books:
-        isbn = book.get('isbn')
+        isbn = book.get("isbn")
         if not isbn:
             # No ISBN means no cover can be fetched. Skip silently.
             continue
 
-        dest = os.path.join(cache_dir, f'{isbn}.jpg')
+        dest = os.path.join(cache_dir, f"{isbn}.jpg")
         if os.path.exists(dest):
             # Already cached from a previous run. No need to fetch again.
             continue
@@ -80,5 +78,5 @@ def _fetch_and_save(isbn, dest):
         # Do not cache it so the template falls back gracefully.
         return
 
-    with open(dest, 'wb') as f:
+    with open(dest, "wb") as f:
         f.write(data)

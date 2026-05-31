@@ -63,9 +63,7 @@ def init_db(cover_cache_dir=None):
                                OR (length(phone_number) >= 10
                                    AND length(phone_number) <= 15
                                    AND phone_number GLOB
-                                   '[0-9][0-9][0-9][0-9]'
-                                   '[0-9][0-9][0-9][0-9]'
-                                   '[0-9][0-9]*'
+                                   '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]*'
                                    AND phone_number NOT GLOB
                                    '*[^0-9]*')),
             password     TEXT NOT NULL

@@ -13,6 +13,7 @@ decisions.
 Clone the repository and create a virtual environment.
 
 ```bash
+cd SWE30003_Book_Store_Website
 python -m venv .venv
 source .venv/bin/activate
 ```
@@ -28,7 +29,6 @@ pip install -e .
 ## Running the Web Application
 
 ```bash
-cd src
 flask run
 ```
 

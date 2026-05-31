@@ -77,7 +77,14 @@ def _seed_books(conn, cover_cache_dir=None):
     # Inserts book records from data.json if the books table is empty.
     # This runs on every startup but only inserts when the table has no rows,
     # so it is safe to call repeatedly without duplicating data.
-    # After inserting, fetches and caches cover images if cover_cache_dir is provided.
+    # After inserting, fetches and caches cover images if cover_cache_dir is
+    # provided.
+    #
+    # cover_cache_dir is passed in from app.py rather than hardcoded here so
+    # the data layer remains independent of the presentation layer. The data
+    # layer should not need to know about Flask's static folder structure.
+    # By injecting the absolute path from the composition root, this function
+    # stays testable and framework-agnostic.
     cursor = conn.cursor()
     cursor.execute('SELECT COUNT(*) FROM books')
     if cursor.fetchone()[0] > 0:

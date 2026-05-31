@@ -40,6 +40,13 @@ class SqliteBookRepository(BookRepository):
         # The cache is populated at seed time by cover_cache.py.
         # If the file does not exist the template falls back to a placeholder.
         if isbn:
+            # Build the filesystem path to the locally cached cover image.
+            # __file__ resolves to src/data/repositories/book_repository.py.
+            # Each '..' moves up one directory level: first to src/data,
+            # then to src/. From there we navigate into
+            # presentation/static/images/covers/{isbn}.jpg.
+            # This relative construction keeps the path correct regardless
+            # of where the project is cloned on disk.
             cache_path = os.path.join(
                 os.path.dirname(__file__), '..', '..',
                 'presentation', 'static', 'images', 'covers', f'{isbn}.jpg'

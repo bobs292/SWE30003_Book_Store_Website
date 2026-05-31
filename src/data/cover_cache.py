@@ -1,20 +1,31 @@
 import os
+import time
 import urllib.request
 import urllib.error
 
 # URL pattern for the Open Library Covers API.
 # {isbn} is replaced with the book's ISBN-13. M is medium size.
-# This is only called once per book, at seed time, and the result is cached locally.
+# This is only called once per book, at seed time, and the result is cached
+# locally.
 _OPEN_LIBRARY_URL = 'https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg'
 
 # Minimum file size in bytes to consider a cover valid.
-# Open Library returns a 1x1 pixel blank image (around 43 bytes) when no cover exists.
-# Any file smaller than this threshold is treated as a missing cover and deleted.
+# Open Library returns a 1x1 pixel blank image (around 43 bytes) when no cover
+# exists. Any file smaller than this threshold is treated as a missing cover
+# and discarded so the template can fall back gracefully to a placeholder.
+# This threshold exists because the API serves a real JPEG for valid ISBNs and
+# a tiny blank for missing ones, and we need to distinguish the two.
 _MIN_COVER_BYTES = 1000
 
 # urllib does not send a User-Agent by default which some servers reject.
-# This mimics a standard browser request so Open Library and archive.org
-# respond with the actual image rather than blocking the request.
+# The User-Agent header identifies this application as a legitimate client
+# rather than an anonymous script. Open Library and archive.org both serve the
+# actual image data when a standard browser-like User-Agent is present, but may
+# return HTTP 403 or block requests that lack one.
+# We use urllib from the Python standard library instead of spawning a
+# subprocess with curl because urllib requires no external dependencies, works
+# identically across Windows, macOS and Linux, and eliminates shell-escaping
+# and injection risks.
 _HEADERS = {
     'User-Agent': 'Mozilla/5.0 (compatible; FavouriteBooks/1.0)'
 }
@@ -23,7 +34,8 @@ _HEADERS = {
 def cache_covers(books, cache_dir):
     """
     Fetches and saves cover images for a list of books into cache_dir.
-    Each cover is saved as {isbn}.jpg. Covers that are already cached are skipped.
+    Each cover is saved as {isbn}.jpg. Covers that are already cached are
+    skipped.
     Books with no isbn or a blank Open Library response are skipped silently.
 
     books     - list of dicts, each with at least an 'isbn' key
@@ -43,6 +55,9 @@ def cache_covers(books, cache_dir):
             continue
 
         _fetch_and_save(isbn, dest)
+        # Pause briefly between requests to avoid rate-limiting by Open Library
+        # and archive.org.
+        time.sleep(0.5)
 
 
 def _fetch_and_save(isbn, dest):

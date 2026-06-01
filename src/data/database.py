@@ -10,8 +10,9 @@ from src.data.cover_cache import cache_covers
 DB_PATH = os.path.join(os.path.dirname(__file__), "store.db")
 
 # Resolves the path to the seed file relative to this file.
-# The seed file is read once on first run to populate the
-# books table.
+# The seed file is read on every startup and its rows are
+# upserted into the books table, so edits to it take effect
+# on the next run.
 SEEDS_PATH = os.path.join(os.path.dirname(__file__), "seeds", "data.json")
 
 
@@ -109,8 +110,12 @@ def init_db(cover_cache_dir=None):
 
     # Books table stores catalogue metadata for each title
     # sold in the store.
-    # isbn is stored as a business attribute identifying the
-    # specific edition.
+    # isbn is the primary key. It uniquely identifies the
+    # specific edition and is therefore mandatory: every book
+    # must carry one. SQLite does not enforce NOT NULL on a
+    # non-integer primary key on its own, so it is declared
+    # explicitly here, and the CHECK rejects empty strings,
+    # which would otherwise be a valid but useless key.
     # isbn also serves as the key for fetching cover images
     # from the Open Library Covers API at
     # https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg.
@@ -123,16 +128,14 @@ def init_db(cover_cache_dir=None):
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS books (
-            book_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            isbn         TEXT NOT NULL PRIMARY KEY
+                         CHECK(length(isbn) >= 1),
             title        TEXT NOT NULL
                          CHECK(length(title) >= 1
                                AND length(title) <= 200),
             author       TEXT NOT NULL
                          CHECK(length(author) >= 1
                                AND length(author) <= 200),
-            isbn         TEXT
-                         CHECK(isbn IS NULL
-                               OR length(isbn) >= 1),
             genre        TEXT NOT NULL DEFAULT 'General'
                          CHECK(length(genre) >= 1
                                AND length(genre) <= 100),
@@ -162,40 +165,54 @@ def _seed_books(conn, cover_cache_dir=None):
         return
 
     cursor = conn.cursor()
-    cursor.execute("SELECT isbn FROM books WHERE isbn IS NOT NULL")
-    existing_isbns = {row["isbn"] for row in cursor.fetchall()}
 
-    new_books = []
+    # isbn is the primary key, so seeding is an upsert keyed on it.
+    # ON CONFLICT(isbn) DO UPDATE means a book already in the table is
+    # refreshed in place from the seed file rather than skipped. This is
+    # what makes edits to the seed file (for example a changed price) take
+    # effect on the next run. The excluded.* values refer to the row that
+    # would have been inserted, i.e. the new values from the seed file.
+    # A book with no isbn cannot be a key and is skipped entirely. This is
+    # deliberate: without it, a seed entry whose isbn had been removed would
+    # be inserted as a brand new row, producing a duplicate title with no
+    # cover. Skipping leaves any existing row for that title untouched.
+    seeded_books = []
     for book in books:
         isbn = book.get("isbn")
         if not isbn:
-            # ISBN is required for new books so covers can be cached and
-            # duplicates can be detected reliably.
-            continue
-        if isbn and isbn in existing_isbns:
+            # No isbn means no primary key. Skip silently rather than
+            # creating an unkeyed duplicate.
             continue
         cursor.execute(
             """
             INSERT INTO books
-                (title, author, isbn, genre,
+                (isbn, title, author, genre,
                  description, price, stock)
             VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(isbn) DO UPDATE SET
+                title       = excluded.title,
+                author      = excluded.author,
+                genre       = excluded.genre,
+                description = excluded.description,
+                price       = excluded.price,
+                stock       = excluded.stock
         """,
             (
+                isbn,
                 book.get("title", ""),
                 book.get("author", ""),
-                book.get("isbn"),
                 book.get("genre", "General"),
                 book.get("description", ""),
                 book.get("price", 0.0),
                 book.get("stock", 0),
             ),
         )
-        if isbn:
-            existing_isbns.add(isbn)
-        new_books.append(book)
+        seeded_books.append(book)
 
     conn.commit()
 
-    if cover_cache_dir and new_books:
-        cache_covers(new_books, cover_cache_dir)
+    # cache_covers is idempotent: it skips any cover already on disk, so it
+    # is safe to pass every seeded book on every run. Only genuinely missing
+    # covers trigger a network fetch.
+    if cover_cache_dir and seeded_books:
+        cache_covers(seeded_books, cover_cache_dir)

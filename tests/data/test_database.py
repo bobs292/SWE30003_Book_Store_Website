@@ -174,10 +174,9 @@ def test_books_table_has_expected_columns():
     columns = {row["name"] for row in cursor.fetchall()}
     conn.close()
     expected = {
-        "book_id",
+        "isbn",
         "title",
         "author",
-        "isbn",
         "genre",
         "description",
         "price",
@@ -307,15 +306,36 @@ def test_book_stock_zero_is_valid(isolated_db):
     conn.close()
 
 
-def test_book_isbn_null_is_valid(isolated_db):
-    # ISBN is optional because some books may not have one or it may not
-    # be known at the time of entry. A null isbn must be accepted.
+def test_book_isbn_null_raises(isolated_db):
+    # ISBN is the primary key, so it is mandatory. A null isbn has no key
+    # and must be rejected. This is the inverse of the old behaviour, where
+    # isbn was an optional business attribute that could be null.
     init_db()
     conn = get_connection()
-    _insert_book(conn, isbn=None)
-    cursor = conn.cursor()
-    cursor.execute("SELECT isbn FROM books WHERE title = ?", ("Test Book",))
-    assert cursor.fetchone()["isbn"] is None
+    with pytest.raises(sqlite3.IntegrityError):
+        _insert_book(conn, isbn=None)
+    conn.close()
+
+
+def test_book_isbn_empty_raises(isolated_db):
+    # An empty string is technically not null but is a useless key. The
+    # CHECK(length(isbn) >= 1) constraint rejects it so it cannot slip in
+    # as a valid primary key.
+    init_db()
+    conn = get_connection()
+    with pytest.raises(sqlite3.IntegrityError):
+        _insert_book(conn, isbn="")
+    conn.close()
+
+
+def test_book_duplicate_isbn_raises(isolated_db):
+    # isbn is the primary key, so two books cannot share one. Inserting a
+    # second book with an isbn already in the table must raise.
+    init_db()
+    conn = get_connection()
+    _insert_book(conn, isbn="9780000000123", title="First")
+    with pytest.raises(sqlite3.IntegrityError):
+        _insert_book(conn, isbn="9780000000123", title="Second")
     conn.close()
 
 
@@ -335,8 +355,9 @@ def test_book_valid_insert_succeeds(isolated_db):
 # ============================================================================
 # _seed_books
 # Tests that the seed loader reads data.json and populates the books table
-# on first run, skips seeding when rows already exist, and handles edge
-# cases like a missing seed file gracefully.
+# on first run, upserts existing rows on later runs (matched by ISBN) so
+# edits like a changed price take effect, skips entries that have no ISBN,
+# and handles edge cases like a missing seed file gracefully.
 # _seed_books is called inside init_db so all these tests call init_db
 # after writing seed data to the temporary SEEDS_PATH.
 
@@ -381,10 +402,9 @@ def test_seed_books_populates_table_on_first_run(isolated_db):
 
 def test_seed_books_does_not_duplicate_on_second_run(isolated_db):
     # Calling init_db a second time when the books table already has rows
-    # should not insert duplicates. The seed function now checks by ISBN,
-    # so books already in the database (matched by ISBN) are skipped.
-    # Books without an ISBN are always inserted since there's no key to
-    # match against.
+    # should not insert duplicates. The seed function upserts on ISBN, so a
+    # book already in the database is updated in place rather than added
+    # again, leaving the row count unchanged.
     seed_data = {
         "books": [
             {
@@ -458,3 +478,125 @@ def test_seed_books_stores_correct_values(isolated_db):
     assert row["description"] == "A verified description."
     assert row["price"] == 19.99
     assert row["stock"] == 4
+
+
+def test_seed_books_skips_entry_without_isbn(isolated_db):
+    # A seed entry with no isbn cannot be keyed and must be skipped rather
+    # than inserted. This guards against the old bug where removing an isbn
+    # from the seed file produced a second copy of the book with no cover.
+    seed_data = {
+        "books": [
+            {
+                "title": "Keyless Book",
+                "author": "Author A",
+                "genre": "Fiction",
+                "description": "",
+                "price": 10.0,
+                "stock": 1,
+            }
+        ]
+    }
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(seed_data, f)
+
+    init_db()
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM books")
+    assert cursor.fetchone()[0] == 0
+    conn.close()
+
+
+def test_seed_books_removing_isbn_does_not_duplicate(isolated_db):
+    # Reproduces the reported scenario directly. A book is seeded with an
+    # isbn on the first run. On the second run its isbn has been removed
+    # from the seed file. The keyless entry is skipped, so the original row
+    # stays and no duplicate title appears.
+    with_isbn = {
+        "books": [
+            {
+                "title": "Gone Girl",
+                "author": "Gillian Flynn",
+                "isbn": "9780307588371",
+                "genre": "Mystery",
+                "description": "",
+                "price": 19.99,
+                "stock": 8,
+            }
+        ]
+    }
+    without_isbn = {
+        "books": [
+            {
+                "title": "Gone Girl",
+                "author": "Gillian Flynn",
+                "genre": "Mystery",
+                "description": "",
+                "price": 19.99,
+                "stock": 8,
+            }
+        ]
+    }
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(with_isbn, f)
+    init_db()
+
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(without_isbn, f)
+    init_db()
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM books WHERE title = ?", ("Gone Girl",))
+    assert cursor.fetchone()[0] == 1
+    conn.close()
+
+
+def test_seed_books_updates_changed_price_on_reseed(isolated_db):
+    # When the seed file changes a value for an existing isbn, re-seeding
+    # must update the row in place. This guards against the old bug where
+    # books already in the table were skipped, so price edits never applied.
+    original = {
+        "books": [
+            {
+                "title": "The Martian",
+                "author": "Andy Weir",
+                "isbn": "9780553418026",
+                "genre": "Science Fiction",
+                "description": "",
+                "price": 18.99,
+                "stock": 5,
+            }
+        ]
+    }
+    updated = {
+        "books": [
+            {
+                "title": "The Martian",
+                "author": "Andy Weir",
+                "isbn": "9780553418026",
+                "genre": "Science Fiction",
+                "description": "",
+                "price": 9.99,
+                "stock": 5,
+            }
+        ]
+    }
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(original, f)
+    init_db()
+
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(updated, f)
+    init_db()
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT price FROM books WHERE isbn = ?", ("9780553418026",))
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Exactly one row, and its price reflects the edited seed value.
+    assert len(rows) == 1
+    assert rows[0]["price"] == 9.99

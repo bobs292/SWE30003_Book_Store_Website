@@ -33,10 +33,13 @@ def cache_covers(books, cache_dir):
     """
     Fetches and saves cover images for a list of books into cache_dir.
     Each cover is saved as {isbn}.jpg. Covers that are already cached are
-    skipped.
-    Books with no isbn or a blank Open Library response are skipped silently.
+    skipped, as are books whose Open Library response is blank.
 
-    books     - list of dicts, each with at least an 'isbn' key
+    Since isbn is the books table's primary key, callers pass books that
+    already have an isbn, so the no-isbn case is only a safety net here
+    rather than an expected path.
+
+    books     - list of dicts, each with an 'isbn' key
     cache_dir - absolute path to the folder where covers should be saved
     """
     os.makedirs(cache_dir, exist_ok=True)
@@ -44,8 +47,7 @@ def cache_covers(books, cache_dir):
     for book in books:
         isbn = book.get("isbn")
         if not isbn:
-            # No ISBN means no cover can be fetched. Skip silently.
-            continue
+            continue  # Safety net: nothing to fetch without an isbn.
 
         dest = os.path.join(cache_dir, f"{isbn}.jpg")
         if os.path.exists(dest):

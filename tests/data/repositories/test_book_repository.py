@@ -11,7 +11,6 @@ class TestSqliteBookRepository:
         # list_books should return every row in the books table as a dict.
         fake_rows = [
             {
-                "book_id": 1,
                 "title": "Book A",
                 "author": "Author A",
                 "isbn": "111",
@@ -21,7 +20,6 @@ class TestSqliteBookRepository:
                 "stock": 5,
             },
             {
-                "book_id": 2,
                 "title": "Book B",
                 "author": "Author B",
                 "isbn": "222",
@@ -48,7 +46,6 @@ class TestSqliteBookRepository:
     def test_get_by_id_returns_correct_book(self):
         # get_by_id should return the matching book with id and cover_url set.
         fake_row = {
-            "book_id": 1,
             "title": "Book A",
             "author": "Author A",
             "isbn": "111",
@@ -71,7 +68,7 @@ class TestSqliteBookRepository:
                 repo = SqliteBookRepository()
                 book = repo.get_by_id(1)
         assert book is not None
-        assert book["id"] == 1
+        assert book["id"] == "111"
         assert book["title"] == "Book A"
 
     def test_get_by_id_returns_none_for_missing_id(self):
@@ -90,7 +87,6 @@ class TestSqliteBookRepository:
         # If the locally cached cover image exists on disk, cover_url should
         # point to the static image route so the template can render it.
         fake_row = {
-            "book_id": 1,
             "title": "Book A",
             "author": "Author A",
             "isbn": "9780140449136",
@@ -119,7 +115,6 @@ class TestSqliteBookRepository:
         # If the cover has not been cached locally, cover_url should be None
         # so the template falls back to a placeholder image.
         fake_row = {
-            "book_id": 1,
             "title": "Book A",
             "author": "Author A",
             "isbn": "9780140449136",
@@ -141,30 +136,5 @@ class TestSqliteBookRepository:
             ):
                 repo = SqliteBookRepository()
                 book = repo.get_by_id(1)
-
-        assert book["cover_url"] is None
-
-    def test_cover_url_none_when_isbn_is_null(self):
-        # When the database row has no ISBN, no cover can be fetched.
-        # cover_url should be None regardless of what exists on disk.
-        fake_row = {
-            "book_id": 1,
-            "title": "Book A",
-            "author": "Author A",
-            "isbn": None,
-            "genre": "Fiction",
-            "description": "Desc A",
-            "price": 9.99,
-            "stock": 5,
-        }
-
-        with patch("src.data.repositories.book_repository.get_connection") as mock_conn:
-            mock_cursor = MagicMock()
-            mock_cursor.fetchone.return_value = fake_row
-            mock_conn.return_value.cursor.return_value = mock_cursor
-            mock_conn.return_value.close = MagicMock()
-
-            repo = SqliteBookRepository()
-            book = repo.get_by_id(1)
 
         assert book["cover_url"] is None

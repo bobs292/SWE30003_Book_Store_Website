@@ -168,6 +168,10 @@ def _seed_books(conn, cover_cache_dir=None):
     new_books = []
     for book in books:
         isbn = book.get("isbn")
+        if not isbn:
+            # ISBN is required for new books so covers can be cached and
+            # duplicates can be detected reliably.
+            continue
         if isbn and isbn in existing_isbns:
             continue
         cursor.execute(

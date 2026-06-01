@@ -2,6 +2,7 @@
 # instantiated directly. abstractmethod marks methods that subclasses must implement.
 from abc import ABC, abstractmethod
 
+
 # Abstract contract for customer data operations. The domain layer imports this class
 # and never the concrete implementation. This means the business logic in the services
 # has no knowledge of how or where customer data is stored. The concrete implementation

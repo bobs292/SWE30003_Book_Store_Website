@@ -33,7 +33,7 @@ the cart itself in the Flask session (presentation layer state).
 Browser POST /cart/add
     presentation/routes/order_routes.py         reads the form, validates qty
     domain/services/catalogue_service.py        provides list of books
-    data/repositories/book_repository.py        loads books from JSON
+    data/repositories/book_repository.py        loads books from SQLite
     presentation/routes/order_routes.py         updates session cart + flash
 ```
 

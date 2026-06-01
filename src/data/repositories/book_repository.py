@@ -1,78 +1,78 @@
-import json
 import os
 
+from src.data.database import get_connection
 from src.domain.repositories.book_repository import BookRepository
 
 
-def _coerce_int(value, default=0):
-	try:
-		return int(value)
-	except (TypeError, ValueError):
-		return default
+class SqliteBookRepository(BookRepository):
 
+    def list_books(self):
+        # Returns all books from the database as a list of dictionaries.
+        # Each dictionary matches the shape the catalogue service and cart
+        # routes expect.
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM books")
+        rows = cursor.fetchall()
+        conn.close()
+        return [self._row_to_dict(row) for row in rows]
 
-def _coerce_float(value, default=0.0):
-	try:
-		return float(value)
-	except (TypeError, ValueError):
-		return default
+    def get_by_id(self, book_id):
+        # Returns a single book by its id, or None if it does not exist.
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM books WHERE book_id = ?", (book_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row is None:
+            return None
+        return self._row_to_dict(row)
 
-
-class JsonBookRepository(BookRepository):
-	def __init__(self, data_path=None):
-		base_dir = os.path.dirname(__file__)
-		default_path = os.path.normpath(os.path.join(base_dir, '..', 'seeds', 'data.json'))
-		self._data_path = data_path or default_path
-
-	def _load_raw(self):
-		if not os.path.exists(self._data_path):
-			return {'books': []}
-
-		try:
-			with open(self._data_path, 'r', encoding='utf-8') as handle:
-				raw = handle.read().strip()
-		except OSError:
-			return {'books': []}
-
-		if not raw:
-			return {'books': []}
-
-		try:
-			data = json.loads(raw)
-		except json.JSONDecodeError:
-			return {'books': []}
-
-		if isinstance(data, dict):
-			return data
-		if isinstance(data, list):
-			return {'books': data}
-
-		return {'books': []}
-
-	def list_books(self):
-		data = self._load_raw()
-		books = data.get('books', [])
-		normalized = []
-
-		for index, book in enumerate(books, start=1):
-			if not isinstance(book, dict):
-				continue
-			normalized.append({
-				'id': _coerce_int(book.get('id', index), index),
-				'title': str(book.get('title', f'Book {index}')),
-				'author': str(book.get('author', 'Unknown')),
-				'genre': str(book.get('genre') or 'General'),
-				'description': str(book.get('description') or ''),
-				'cover_color': str(book.get('cover_color') or '#d6cbb8'),
-				'price': round(_coerce_float(book.get('price', 0.0), 0.0), 2),
-				'stock': max(_coerce_int(book.get('stock', 0), 0), 0),
-			})
-
-		return normalized
-
-	def get_by_id(self, book_id):
-		target = str(book_id)
-		for book in self.list_books():
-			if str(book.get('id')) == target:
-				return book
-		return None
+    def _row_to_dict(self, row):
+        # Converts a database row into a plain dictionary.
+        # The id key maps to book_id so the rest of the application does not
+        # need to know the internal column name.
+        # cover_url is derived from the isbn at query time using the Open Library
+        # Covers API. isbn remains in the database as a business attribute
+        # identifying the specific edition. If isbn is null, cover_url is None
+        # and the template falls back to a placeholder.
+        isbn = row["isbn"]
+        # Use the locally cached cover if it exists.
+        # The cache is populated at seed time by cover_cache.py.
+        # If the file does not exist the template falls back to a placeholder.
+        if isbn:
+            # Build the filesystem path to the locally cached cover image.
+            # __file__ resolves to src/data/repositories/book_repository.py.
+            # Each '..' moves up one directory level: first to src/data,
+            # then to src/. From there we navigate into
+            # presentation/static/images/covers/{isbn}.jpg.
+            # This relative construction keeps the path correct regardless
+            # of where the project is cloned on disk.
+            cache_path = os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "presentation",
+                "static",
+                "images",
+                "covers",
+                f"{isbn}.jpg",
+            )
+            cover_url = (
+                f"/static/images/covers/{isbn}.jpg"
+                if os.path.exists(cache_path)
+                else None
+            )
+        else:
+            cover_url = None
+        return {
+            "id": row["book_id"],
+            "title": row["title"],
+            "author": row["author"],
+            "isbn": isbn,
+            "genre": row["genre"],
+            "description": row["description"],
+            "cover_url": cover_url,
+            "price": row["price"],
+            "stock": row["stock"],
+        }

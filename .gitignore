@@ -10,3 +10,10 @@ venv/
 
 # Database (this is initialised on start)
 src/data/store.db
+
+# Cover images (fetched from Open Library at seed time)
+src/presentation/static/images/covers/
+
+# Tool caches (regenerated automatically on each run)
+.grimp_cache/
+.import_linter_cache/

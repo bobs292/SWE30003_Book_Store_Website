@@ -1,7 +1,7 @@
 import urllib.error
 from unittest.mock import MagicMock, patch
 
-from src.data.cover_cache import cache_covers
+from src.data.seeds.cover_cache import cache_covers
 
 
 class TestCacheCovers:
@@ -25,7 +25,7 @@ class TestCacheCovers:
         # Fake JPEG-like data well above the 1000 byte threshold.
         fake_image = b"\xff\xd8\xff\xe0" + b"x" * 2000
 
-        with patch("src.data.cover_cache.urllib.request.urlopen") as mock_urlopen:
+        with patch("src.data.seeds.cover_cache.urllib.request.urlopen") as mock_urlopen:
             response = MagicMock()
             response.read.return_value = fake_image
             mock_urlopen.return_value.__enter__.return_value = response
@@ -43,7 +43,7 @@ class TestCacheCovers:
         isbn = "9780000000000"
         tiny_placeholder = b"\x00" * 50  # Far below the 1000 byte threshold.
 
-        with patch("src.data.cover_cache.urllib.request.urlopen") as mock_urlopen:
+        with patch("src.data.seeds.cover_cache.urllib.request.urlopen") as mock_urlopen:
             response = MagicMock()
             response.read.return_value = tiny_placeholder
             mock_urlopen.return_value.__enter__.return_value = response
@@ -62,7 +62,7 @@ class TestCacheCovers:
         existing_file = cache_dir / f"{isbn}.jpg"
         existing_file.write_bytes(b"existing_data")
 
-        with patch("src.data.cover_cache._fetch_and_save") as mock_fetch:
+        with patch("src.data.seeds.cover_cache._fetch_and_save") as mock_fetch:
             cache_covers([{"isbn": isbn}], str(cache_dir))
 
         mock_fetch.assert_not_called()
@@ -73,7 +73,7 @@ class TestCacheCovers:
         # They should be skipped without raising or calling the fetcher.
         cache_dir = tmp_path / "covers"
 
-        with patch("src.data.cover_cache._fetch_and_save") as mock_fetch:
+        with patch("src.data.seeds.cover_cache._fetch_and_save") as mock_fetch:
             cache_covers([{"title": "No ISBN Book"}], str(cache_dir))
 
         mock_fetch.assert_not_called()
@@ -84,7 +84,7 @@ class TestCacheCovers:
         cache_dir = tmp_path / "covers"
         isbn = "9780140449136"
 
-        with patch("src.data.cover_cache.urllib.request.urlopen") as mock_urlopen:
+        with patch("src.data.seeds.cover_cache.urllib.request.urlopen") as mock_urlopen:
             mock_urlopen.side_effect = urllib.error.URLError("Connection timeout")
             cache_covers([{"isbn": isbn}], str(cache_dir))
 

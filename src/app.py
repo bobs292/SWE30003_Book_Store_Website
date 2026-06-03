@@ -8,15 +8,15 @@ from flask import Flask, render_template, session
 # init_db creates the database tables on startup.
 from src.data.database import init_db
 
+# Concrete gateway — only instantiated when SmartyStreets credentials are present.
+from src.data.gateways.address_validator import SmartyStreetsAddressValidator
+
 # Concrete repository for loading books from JSON.
 from src.data.repositories.book_repository import SqliteBookRepository
 
 # The only concrete repository imported in this file. All other layers
 # reference the abstract contract.
 from src.data.repositories.customer_repository import SqliteCustomerRepository
-
-# Concrete address validator — only created when SmartyStreets credentials are present.
-from src.data.services.address_validator import SmartyStreetsAddressValidator
 
 # The auth service contains the business logic for login and registration.
 from src.domain.services.auth_service import AuthService

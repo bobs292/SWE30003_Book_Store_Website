@@ -2,7 +2,7 @@ import json
 import os
 import sqlite3
 
-from src.data.cover_cache import cache_covers
+from src.data.seeds.cover_cache import cache_covers
 
 # Resolves the path to store.db relative to this file.
 # All repositories import get_connection() from here rather

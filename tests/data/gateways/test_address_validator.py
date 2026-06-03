@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.data.services.address_validator import SmartyStreetsAddressValidator
+from src.data.gateways.address_validator import SmartyStreetsAddressValidator
 
 _has_credentials = bool(
     os.environ.get("SMARTY_AUTH_ID") and os.environ.get("SMARTY_AUTH_TOKEN")

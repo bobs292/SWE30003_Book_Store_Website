@@ -37,10 +37,13 @@ SWE30003_Book_Store_Website/
 │   │       ├── test_inventory_service.py
 │   │       └── test_search_service.py
 │   ├── data/
-│   │   └── repositories/
-│   │       ├── test_customer_repository.py
-│   │       ├── test_book_repository.py
-│   │       └── test_order_repository.py
+│   │   ├── gateways/
+│   │   │   └── test_address_validator.py
+│   │   ├── repositories/
+│   │   │   ├── test_customer_repository.py
+│   │   │   ├── test_book_repository.py
+│   │   │   └── test_order_repository.py
+│   │   └── test_cover_cache.py
 │   └── presentation/
 │       └── routes/
 │           ├── test_auth_routes.py
@@ -53,15 +56,23 @@ SWE30003_Book_Store_Website/
     │   ├── __init__.py
     │   ├── database.py
     │   ├── store.db
-    │   ├── seeds/
-    │   │   └── data.json
-    │   └── repositories/
+    │   ├── gateways/
+    │   │   ├── __init__.py
+    │   │   └── address_validator.py
+    │   ├── repositories/
+    │   │   ├── __init__.py
+    │   │   ├── book_repository.py
+    │   │   ├── customer_repository.py
+    │   │   └── order_repository.py
+    │   └── seeds/
     │       ├── __init__.py
-    │       ├── book_repository.py
-    │       ├── customer_repository.py
-    │       └── order_repository.py
+    │       ├── cover_cache.py
+    │       └── data.json
     ├── domain/
     │   ├── __init__.py
+    │   ├── gateways/
+    │   │   ├── __init__.py
+    │   │   └── address_gateway.py
     │   ├── models/
     │   │   ├── __init__.py
     │   │   ├── user.py
@@ -152,6 +163,10 @@ The business entities of the system. Each file represents one concept from the d
 
 `user.py` is an abstract class and is the parent of `customer.py` and `admin.py`. This is an Is-Kind-Of (inheritance) relationship. Keeping all three together makes the class hierarchy visible in the filesystem.
 
+### src/domain/gateways/
+
+Abstract contracts for external services the domain depends on. Each file defines an interface — what the gateway must do — without any knowledge of HTTP, APIs, or third-party SDKs. Concrete implementations live in `src/data/gateways/`.
+
 ### src/domain/repositories/
 
 The specifications that define what persistent storage operations the domain requires. Each file defines the contract a concrete implementation must fulfil, without specifying how data is stored. Placing these in the domain layer reflects that they express a requirement of the domain, not a detail of storage.
@@ -166,13 +181,17 @@ This folder maps directly to the controller classes identified in Assignment 2.
 
 The data layer. It owns all persistent storage concerns. No other layer reads from or writes to the database directly.
 
-### src/data/seeds/
+### src/data/gateways/
 
-Initial data that populates the application on first run, including users, books, and other required records.
+Concrete implementations of the gateway contracts defined in `src/domain/gateways/`. Each file owns the HTTP calls, SDK usage, and external API details for one external service. If the provider changed, only this folder would change.
 
 ### src/data/repositories/
 
 Concrete implementations of the repository contracts defined in `src/domain/repositories/`. If the project migrated to a different database, the files in this folder would be replaced. The domain layer would require no changes.
+
+### src/data/seeds/
+
+Initial data and utilities that populate the application on first run. `data.json` seeds the books catalogue. `cover_cache.py` fetches and caches cover images from Open Library at seed time so the presentation layer can serve them statically.
 
 ## tests/
 

@@ -2,9 +2,9 @@ import re
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from src.domain.gateways.address_gateway import AddressGateway
 from src.domain.models.customer import Address, Customer
 from src.domain.repositories.customer_repository import CustomerRepository
-from src.domain.services.address_validator import AddressValidator
 
 
 class AuthService:
@@ -23,7 +23,7 @@ class AuthService:
     )
 
     def __init__(
-        self, customer_repo: CustomerRepository, address_validator: AddressValidator
+        self, customer_repo: CustomerRepository, address_validator: AddressGateway
     ):
         self.customer_repo = customer_repo
         self.address_validator = address_validator

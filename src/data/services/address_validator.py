@@ -3,10 +3,10 @@ import os
 from smartystreets_python_sdk import BasicAuthCredentials, ClientBuilder
 from smartystreets_python_sdk.international_street import Lookup as InternationalLookup
 
-from src.domain.services.address_validator import AddressValidator
+from src.domain.gateways.address_gateway import AddressGateway
 
 
-class SmartyStreetsAddressValidator(AddressValidator):
+class SmartyStreetsAddressValidator(AddressGateway):
     def __init__(self, auth_id=None, auth_token=None):
         # Falls back to environment variables if credentials are not passed directly.
         auth_id = auth_id or os.environ.get("SMARTY_AUTH_ID")

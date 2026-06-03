@@ -1,8 +1,8 @@
 import pytest
 
+from src.domain.gateways.address_gateway import AddressGateway
 from src.domain.models.customer import Customer
 from src.domain.repositories.customer_repository import CustomerRepository
-from src.domain.services.address_validator import AddressValidator
 from src.domain.services.auth_service import AuthService
 
 
@@ -27,7 +27,7 @@ class InMemoryCustomerRepository(CustomerRepository):
 
 # Stub that satisfies the AddressValidator interface without hitting the network.
 # Pass error=None to simulate a valid address; pass an error string to simulate failure.
-class StubAddressValidator(AddressValidator):
+class StubAddressValidator(AddressGateway):
     def __init__(self, error=None):
         self._error = error
 

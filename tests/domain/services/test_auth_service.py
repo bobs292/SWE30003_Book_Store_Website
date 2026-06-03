@@ -2,6 +2,7 @@ import pytest
 
 from src.domain.models.customer import Customer
 from src.domain.repositories.customer_repository import CustomerRepository
+from src.domain.services.address_validator import AddressValidator
 from src.domain.services.auth_service import AuthService
 
 
@@ -22,6 +23,16 @@ class InMemoryCustomerRepository(CustomerRepository):
 
     def find_by_id(self, customer_id):
         return next((c for c in self._store if c.customer_id == customer_id), None)
+
+
+# Stub that satisfies the AddressValidator interface without hitting the network.
+# Pass error=None to simulate a valid address; pass an error string to simulate failure.
+class StubAddressValidator(AddressValidator):
+    def __init__(self, error=None):
+        self._error = error
+
+    def validate(self, street, suburb, state, postcode):
+        return self._error
 
 
 # Helper to build a minimal valid Customer for seeding the repo in tests that
@@ -46,7 +57,7 @@ def repo():
 
 @pytest.fixture
 def service(repo):
-    return AuthService(customer_repo=repo)
+    return AuthService(customer_repo=repo, address_validator=StubAddressValidator())
 
 
 # --- _validate_password ---
@@ -224,3 +235,110 @@ def test_register_duplicate_phone_raises(service, repo):
 def test_register_invalid_password_raises(service, repo):
     with pytest.raises(ValueError, match="Password must contain"):
         service.register("John", "Smith", "a@b.co", "short")
+
+
+# --- _validate_address ---
+
+
+@pytest.fixture
+def valid_address_validator():
+    return StubAddressValidator(error=None)
+
+
+@pytest.fixture
+def invalid_address_validator():
+    return StubAddressValidator(error="Address could not be verified.")
+
+
+@pytest.fixture
+def service_with_address_validator(repo, valid_address_validator):
+    return AuthService(customer_repo=repo, address_validator=valid_address_validator)
+
+
+def test_validate_address_no_fields_skips_validator(
+    service_with_address_validator,
+):
+    assert service_with_address_validator._validate_address() is None
+
+
+def test_validate_address_valid_returns_none(service_with_address_validator):
+    result = service_with_address_validator._validate_address(
+        street="1 Main St", suburb="Melbourne", state="VIC", postcode="3000"
+    )
+    assert result is None
+
+
+def test_validate_address_invalid_returns_error(repo, invalid_address_validator):
+    svc = AuthService(customer_repo=repo, address_validator=invalid_address_validator)
+    result = svc._validate_address(
+        street="99 Fake St", suburb="Nowhere", state="VIC", postcode="9999"
+    )
+    assert result == "Address could not be verified."
+
+
+def test_validate_includes_address_error(repo, invalid_address_validator):
+    svc = AuthService(customer_repo=repo, address_validator=invalid_address_validator)
+    errors = svc.validate(
+        email="a@b.co",
+        password="Passw0rd",
+        street="99 Fake St",
+        suburb="Nowhere",
+        state="VIC",
+        postcode="9999",
+    )
+    assert errors["address"] == "Address could not be verified."
+
+
+def test_validate_no_address_error_when_valid(repo, valid_address_validator):
+    svc = AuthService(customer_repo=repo, address_validator=valid_address_validator)
+    errors = svc.validate(
+        email="a@b.co",
+        password="Passw0rd",
+        street="1 Main St",
+        suburb="Melbourne",
+        state="VIC",
+        postcode="3000",
+    )
+    assert "address" not in errors
+
+
+def test_register_builds_address_object(repo, valid_address_validator):
+    svc = AuthService(customer_repo=repo, address_validator=valid_address_validator)
+    svc.register(
+        "John",
+        "Smith",
+        "a@b.co",
+        "Passw0rd",
+        street="1 Main St",
+        suburb="Melbourne",
+        state="VIC",
+        postcode="3000",
+    )
+    customer = repo.find_by_email("a@b.co")
+    assert customer.address is not None
+    assert customer.address.street == "1 Main St"
+    assert customer.address.suburb == "Melbourne"
+    assert customer.address.state == "VIC"
+    assert customer.address.postcode == "3000"
+
+
+def test_register_no_address_fields_leaves_address_none(repo):
+    svc = AuthService(customer_repo=repo, address_validator=StubAddressValidator())
+    svc.register("John", "Smith", "a@b.co", "Passw0rd")
+    customer = repo.find_by_email("a@b.co")
+    assert customer.address is None
+
+
+def test_register_invalid_address_raises(repo, invalid_address_validator):
+    svc = AuthService(customer_repo=repo, address_validator=invalid_address_validator)
+    with pytest.raises(ValueError, match="Address could not be verified"):
+        svc.register(
+            "John",
+            "Smith",
+            "a@b.co",
+            "Passw0rd",
+            street="99 Fake St",
+            suburb="Nowhere",
+            state="VIC",
+            postcode="9999",
+        )

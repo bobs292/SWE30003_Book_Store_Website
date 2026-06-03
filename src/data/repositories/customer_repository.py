@@ -64,6 +64,7 @@ class SqliteCustomerRepository(CustomerRepository):
         return self._row_to_customer(row)
 
     def find_by_phone_number(self, phone_number):
+        # Returns the customer with the given phone number, or None if not found.
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute(

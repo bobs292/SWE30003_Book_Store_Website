@@ -17,6 +17,7 @@ requires-python = ">=3.13"
 dependencies = [
     "flask",
     "python-dotenv",
+    "smartystreets-python-sdk",
 ]
 
 # Development dependencies available when running commands via hatch.

@@ -2,6 +2,7 @@
 # from the templates folder.
 import os
 
+from dotenv import load_dotenv
 from flask import Flask, render_template, session
 
 # init_db creates the database tables on startup.
@@ -13,6 +14,9 @@ from src.data.repositories.book_repository import SqliteBookRepository
 # The only concrete repository imported in this file. All other layers
 # reference the abstract contract.
 from src.data.repositories.customer_repository import SqliteCustomerRepository
+
+# Concrete address validator — only created when SmartyStreets credentials are present.
+from src.data.services.address_validator import SmartyStreetsAddressValidator
 
 # The auth service contains the business logic for login and registration.
 from src.domain.services.auth_service import AuthService
@@ -27,6 +31,9 @@ from src.presentation.routes.order_routes import create_order_routes
 
 
 def create_app():
+    # Reads .env into os.environ so SMARTY_AUTH_ID / SMARTY_AUTH_TOKEN are available.
+    load_dotenv()
+
     # Initialises the Flask app, telling it where to find the HTML templates
     # and static files relative to the src/ directory.
     app = Flask(
@@ -53,9 +60,15 @@ def create_app():
     # This is the only place in the project where this class is named directly.
     customer_repo = SqliteCustomerRepository()
 
+    # Instantiates the SmartyStreets validator using credentials from .env.
+    address_validator = SmartyStreetsAddressValidator(
+        os.environ.get("SMARTY_AUTH_ID"),
+        os.environ.get("SMARTY_AUTH_TOKEN"),
+    )
+
     # Instantiates the auth service, injecting the customer repository so
     # the service can access customer data without knowing it is backed by SQLite.
-    auth_service = AuthService(customer_repo)
+    auth_service = AuthService(customer_repo, address_validator=address_validator)
 
     # Creates the catalogue service by injecting the JSON book repository.
     book_repo = SqliteBookRepository()

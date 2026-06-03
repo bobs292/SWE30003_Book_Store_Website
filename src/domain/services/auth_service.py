@@ -2,8 +2,9 @@ import re
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from src.domain.models.customer import Customer
+from src.domain.models.customer import Address, Customer
 from src.domain.repositories.customer_repository import CustomerRepository
+from src.domain.services.address_validator import AddressValidator
 
 
 class AuthService:
@@ -21,8 +22,11 @@ class AuthService:
         r")$"
     )
 
-    def __init__(self, customer_repo: CustomerRepository):
+    def __init__(
+        self, customer_repo: CustomerRepository, address_validator: AddressValidator
+    ):
         self.customer_repo = customer_repo
+        self.address_validator = address_validator
 
     def _validate_password(self, password):
         """Return list of password requirement error strings. Handles None/empty."""
@@ -49,9 +53,23 @@ class AuthService:
                 errors["phone_number"] = "Enter a valid phone number."
         return errors, cleaned_phone
 
-    def validate(self, email=None, phone_number=None, password=None):
-        """Presentation-layer validation: format checks first, then uniqueness.
-        Returns dict of field → error message."""
+    def _validate_address(self, street=None, suburb=None, state=None, postcode=None):
+        # Address is optional — skip the API call when no fields are provided.
+        if not any([street, suburb, state, postcode]):
+            return None
+        return self.address_validator.validate(street, suburb, state, postcode)
+
+    def validate(
+        self,
+        email=None,
+        phone_number=None,
+        password=None,
+        street=None,
+        suburb=None,
+        state=None,
+        postcode=None,
+    ):
+        """Validate registration fields. Returns dict of field → error message."""
         errors, cleaned_phone = self._validate_formats(
             email=email, phone_number=phone_number
         )
@@ -67,13 +85,35 @@ class AuthService:
         if pw_errors:
             errors["password"] = "Password must contain " + ", ".join(pw_errors) + "."
 
+        # Validate address via SmartyStreets if any address field was supplied.
+        addr_error = self._validate_address(
+            street=street, suburb=suburb, state=state, postcode=postcode
+        )
+        if addr_error:
+            errors["address"] = addr_error
+
         return errors
 
     def register(
-        self, first_name, last_name, email, password, phone_number=None, address=None
+        self,
+        first_name,
+        last_name,
+        email,
+        password,
+        phone_number=None,
+        street=None,
+        suburb=None,
+        state=None,
+        postcode=None,
     ):
         errors = self.validate(
-            email=email, phone_number=phone_number, password=password
+            email=email,
+            phone_number=phone_number,
+            password=password,
+            street=street,
+            suburb=suburb,
+            state=state,
+            postcode=postcode,
         )
 
         if not first_name or not first_name.strip():
@@ -84,8 +124,18 @@ class AuthService:
         if errors:
             raise ValueError(", ".join(errors.values()))
 
-        # Normalize phone number — strip spaces before storing
+        # Normalize phone number — strip spaces before storing.
         cleaned_phone = phone_number.replace(" ", "") if phone_number else None
+
+        # Construct an Address object only when at least one field was provided.
+        address = None
+        if any([street, suburb, state, postcode]):
+            address = Address(
+                street=street,
+                suburb=suburb,
+                state=state,
+                postcode=postcode,
+            )
 
         customer = Customer(
             first_name=first_name,

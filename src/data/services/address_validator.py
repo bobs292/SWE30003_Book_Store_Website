@@ -16,8 +16,17 @@ class SmartyStreetsAddressValidator(AddressValidator):
             credentials
         ).build_international_street_api_client()
 
+    _STATUS_ERRORS = {
+        "Partial": (
+            "Address only partially matched — please check suburb, state and postcode."
+        ),
+        "Ambiguous": (
+            "Address is ambiguous — please provide a more specific street address."
+        ),
+        "None": "Address could not be verified — please check all fields.",
+    }
+
     def validate(self, street, suburb, state, postcode) -> str | None:
-        # Maps the four address fields to the SmartyStreets international lookup format.
         lookup = InternationalLookup()
         lookup.country = "Australia"
         lookup.address1 = street or ""
@@ -26,9 +35,13 @@ class SmartyStreetsAddressValidator(AddressValidator):
         lookup.postal_code = postcode or ""
         try:
             self._client.send(lookup)
-            # A non-empty result list means the address was recognised and verified.
-            if lookup.result:
+            if not lookup.result:
+                return "Address could not be verified."
+            status = lookup.result[0].analysis.verification_status
+            if status == "Verified":
                 return None
-            return "Address could not be verified."
+            return self._STATUS_ERRORS.get(
+                status, f"Address could not be verified (status: {status})."
+            )
         except Exception as e:
             return f"Address verification failed: {e}"

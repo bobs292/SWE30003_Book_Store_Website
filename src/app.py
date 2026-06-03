@@ -31,8 +31,8 @@ from src.presentation.routes.order_routes import create_order_routes
 
 
 def create_app():
-    # Reads .env into os.environ so SMARTY_AUTH_ID / SMARTY_AUTH_TOKEN are available.
     load_dotenv()
+    load_dotenv(".env.local", override=True)
 
     # Initialises the Flask app, telling it where to find the HTML templates
     # and static files relative to the src/ directory.

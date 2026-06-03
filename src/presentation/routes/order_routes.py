@@ -215,7 +215,14 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
                 )
                 _save_cart({})
                 flash(f"Order #{order.order_id} placed! Invoice #{invoice.invoice_id}", "success")
-                return redirect(url_for("order.confirmation", order_id=order.order_id))
+                #to display books in confirm screne
+                books = catalogue_service.list_books()
+                books_by_id = {str(book["id"]): book for book in books}
+                for item in order.items:
+                    book = books_by_id.get(str(item.book_id))
+                    item.book_title = book["title"] if book else f"Book {item.book_id}"
+
+                return render_template("order_confirmation.html", order=order, invoice=invoice)
 
             except ValueError as e:
                 flash(str(e), "error")

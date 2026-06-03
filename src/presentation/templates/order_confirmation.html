@@ -1,9 +1,55 @@
 <!-- Displays Invoice. AKA Order Number, Items,
  Total Cost, Delivery Address -->
-
+<!-- Displays Invoice. AKA Order Number, Items, Total Cost, Delivery Address -->
 {% extends "base.html" %}
 {% block content %}
-<h1>Thank you for your order!</h1>
-<p>Order #{{ order_id }} has been placed.</p>
-<a href="{{ url_for('catalogue.catalogue_page') }}">Continue shopping</a>
+<div class="page-header">
+    <h1>Thank You for Your Order!</h1>
+</div>
+
+<h3>Order #{{ order.order_id }}</h3>
+<p><strong>Date:</strong> {{ order.order_date.strftime('%Y-%m-%d %H:%M') }}</p>
+
+<p><strong>Shipping Address:</strong> {{ order.shipping_address }}</p>
+
+<p><strong>Phone:</strong> {{ order.shipping_phone }}</p>
+
+<table class="cart-table">
+    <thead><tr><th>Book Title</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead>
+    <tbody>
+        {% for item in order.items %}
+        <tr>
+            <td>{{ item.book_title }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ "%.2f"|format(item.unit_price) }}</td>
+            <td>${{ "%.2f"|format(item.quantity * item.unit_price) }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="3" style="text-align:right">
+                <strong>Shipping (flat rate)  </strong>
+            </td>
+            <td>
+                <strong>$9.99</strong>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<div class="total-section">
+    <strong>Total (including shipping): ${{ "%.2f"|format(order.total_amount) }}</strong>
+</div>
+
+<h4>Invoice ID #{{ invoice.invoice_id }}</h4>
+<p>Invoice date: {{ invoice.invoice_date.strftime('%Y-%m-%d %H:%M') }}</p>
+
+<a href="{{ url_for('catalogue.catalogue_page') }}" class="primary">Continue Shopping</a>
+
+
+<style>
+.total-section {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+}
+</style>
 {% endblock %}

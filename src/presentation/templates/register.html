@@ -57,8 +57,16 @@
             <h2>Register</h2>
     <form action="{{ url_for('auth.register') }}" method="POST">
                 <div class="form-group">
-                    <label for="name">Name</label>
-                    <input type="text" id="name" name="name" placeholder="Enter Name" required>
+                    <label for="First_Name">First Name</label>
+                    <input type="text" id="First_Name" name="First_Name" placeholder="Enter First name" required>
+                </div>
+                <div class="form-group">
+                    <label for="Last_Name">Last Name</label>
+                    <input type="text" id="Last_Name" name="Last_Name" placeholder="Enter Last name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="text" id="email" name="email" placeholder="Enter Email" required>
                 </div>
                 <div class="form-group">
                     <label for="address">Address</label>

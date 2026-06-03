@@ -25,6 +25,14 @@ from src.presentation.routes.auth_routes import create_auth_routes
 from src.presentation.routes.catalogue_routes import create_catalogue_routes
 from src.presentation.routes.order_routes import create_order_routes
 
+#order related repositories, 
+from src.data.repositories.order_repository import SqliteOrderRepository  
+from src.data.repositories.invoice_repository import SqliteInvoiceRepository
+
+from src.data.payment_gateway import MockPaymentGateway
+
+from src.domain.services.checkout_service import CheckoutService
+
 
 def create_app():
     # Initialises the Flask app, telling it where to find the HTML templates
@@ -61,8 +69,15 @@ def create_app():
     book_repo = SqliteBookRepository()
     catalogue_service = CatalogueService(book_repo)
 
+    #Order Relatated repos 
+    order_repo = SqliteOrderRepository()
+    invoice_repo = SqliteInvoiceRepository()
+    payment_gateway = MockPaymentGateway()
+    #Service for checkout
+    checkout_service = CheckoutService(order_repo, invoice_repo, book_repo, payment_gateway)
     # Creates the auth routes with the auth service injected, then registers
     # them with Flask so the app knows to handle incoming requests to
+    
     # /login, /register and /logout.
     app.register_blueprint(create_auth_routes(auth_service))
 
@@ -70,8 +85,9 @@ def create_app():
     app.register_blueprint(create_catalogue_routes(catalogue_service))
 
     # Registers the order routes with the catalogue service injected.
-    app.register_blueprint(create_order_routes(catalogue_service))
-
+    app.register_blueprint(create_order_routes(catalogue_service, checkout_service, customer_repo))
+    
+    
     # Registers the homepage route directly on the app rather than a blueprint
     # as it does not belong to any specific area of the application.
     @app.route("/")

@@ -2,9 +2,8 @@
  Total Cost, Delivery Address -->
 
 {% extends "base.html" %}
-
 {% block content %}
-<div>
-
-</div>
+<h1>Thank you for your order!</h1>
+<p>Order #{{ order_id }} has been placed.</p>
+<a href="{{ url_for('catalogue.catalogue_page') }}">Continue shopping</a>
 {% endblock %}

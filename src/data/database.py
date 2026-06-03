@@ -144,7 +144,46 @@ def init_db(cover_cache_dir=None):
         )
     """
     )
-
+    #stores all the orders
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS orders (
+            order_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id INTEGER NOT NULL,
+            order_date TEXT NOT NULL,
+            total_amount REAL NOT NULL,
+            shipping_address TEXT,
+            shipping_phone TEXT,
+                FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+            )
+        """
+    )
+    #stores all the order items, that will be used to complete an order
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS order_items (
+            order_item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            book_id INTEGER NOT NULL,
+            quantity INTEGER NOT NULL,
+            unit_price REAL NOT NULL,
+            FOREIGN KEY (order_id) REFERENCES orders(order_id),
+            FOREIGN KEY (book_id) REFERENCES books(book_id)
+            )
+        """
+        )
+    #Store all invoices
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS invoices (
+            invoice_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id INTEGER NOT NULL,
+            invoice_date TEXT NOT NULL,
+            amount_due REAL NOT NULL,
+                FOREIGN KEY (order_id) REFERENCES orders(order_id)
+            )
+        """
+        )
     conn.commit()
     _seed_books(conn, cover_cache_dir)
     conn.close()

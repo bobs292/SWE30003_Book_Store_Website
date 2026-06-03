@@ -62,7 +62,7 @@ def _build_cart_items(books, cart):
     return items, subtotal
 
 
-def create_order_routes(catalogue_service):
+def create_order_routes(catalogue_service, checkout_service, customer_repo):
     order = Blueprint("order", __name__)
 
     @order.route("/cart")
@@ -164,15 +164,79 @@ def create_order_routes(catalogue_service):
             flash(f"Cleared {total_items} item(s) from your cart.", "success")
         return redirect(url_for("order.cart"))
 
-    @order.route("/checkout")
+    @order.route("/confirmation/<int:order_id>")
+    def confirmation(order_id):
+        # You can fetch order and invoice from repositories if needed
+        return render_template("order_confirmation.html", order_id=order_id)
+            
+    @order.route("/checkout", methods=["GET", "POST"])
     def checkout():
+        if request.method == "POST":
+        # get the form data
+            address    = request.form.get("address")
+            city       = request.form.get("city")
+            postcode   = request.form.get("postcode")
+            phone      = request.form.get("phone")
+            shipping_address = f"{address}, {city}, {postcode}"
+        #get cart data
+            cart_data = _get_cart()
+            if not cart_data:
+                flash("Your cart is empty.", "error")
+                return redirect(url_for("order.cart"))
+        # 3. Retrieve full book details (needed for the service)
+            books = catalogue_service.list_books()
+            cart_items, subtotal = _build_cart_items(books, cart_data)
+            if not cart_items:
+                flash("No valid items in cart.", "error")
+                return redirect(url_for("order.cart"))
+        #prepare input for serive
+            service_items = []
+            for item in cart_items:
+                service_items.append({
+                    "book_id": item["book"]["id"],
+                    "quantity": item["quantity"],
+                    "unit_price": item["book"]["price"]
+                })
+            customer_id = 1 
+        # # Check if the customer is logged in
+        #     customer_id = session.get("user_id")  
+        #     if not customer_id:
+        #         flash("Please log in to checkout.", "error")
+        #         return redirect(url_for("auth.login"))
+        #call the service
+            try:
+                order, invoice = checkout_service.process_checkout(
+                    customer_id=customer_id,
+                    cart_items=service_items,
+                    shipping_address=shipping_address,
+                    shipping_phone=phone,
+                    payment_details={}
+                )
+                _save_cart({})
+                flash(f"Order #{order.order_id} placed! Invoice #{invoice.invoice_id}", "success")
+                return redirect(url_for("order.confirmation", order_id=order.order_id))
+
+            except ValueError as e:
+                flash(str(e), "error")
+                return redirect(url_for("order.cart"))
+            except Exception as e:
+                flash(f"Checkout failed: {str(e)}", "error")
+                return redirect(url_for("order.cart"))
+        # GET METHOD 
         books = catalogue_service.list_books()
         cart_data = _get_cart()
         cart_items, subtotal = _build_cart_items(books, cart_data)
+        
+        customer = None
+        # customer_id = session.get("user_id")
+        # if customer_id:
+        #     customer = customer_repo.find_by_id(customer_id)
+
         return render_template(
             "checkout.html",
             cart_items=cart_items,
             subtotal=subtotal,
-        )
-
+            customer=customer
+        ) 
     return order
+

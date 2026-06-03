@@ -66,7 +66,9 @@ def init_db(cover_cache_dir=None):
                                    AND phone_number GLOB
                                    '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]*'
                                    AND phone_number NOT GLOB
-                                   '*[^0-9]*')),
+                                   '*[^0-9]*'))
+             UNIQUE,
+
             password     TEXT NOT NULL
                          CHECK(length(password) >= 60),
             street       TEXT

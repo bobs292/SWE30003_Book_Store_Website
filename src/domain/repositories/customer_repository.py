@@ -21,6 +21,12 @@ class CustomerRepository(ABC):
         pass
 
     @abstractmethod
+    def find_by_phone_number(self, phone_number):
+        # Returns a Customer object matching the given phone number,
+        # or None if not found.
+        pass
+
+    @abstractmethod
     def find_by_id(self, customer_id):
         # Returns a Customer object matching the given id, or None if not found.
         pass

@@ -63,6 +63,18 @@ class SqliteCustomerRepository(CustomerRepository):
             return None
         return self._row_to_customer(row)
 
+    def find_by_phone_number(self, phone_number):
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM customers WHERE phone_number = ?", (phone_number,)
+        )
+        row = cursor.fetchone()
+        conn.close()
+        if row is None:
+            return None
+        return self._row_to_customer(row)
+
     def find_by_id(self, customer_id):
         conn = get_connection()
         cursor = conn.cursor()

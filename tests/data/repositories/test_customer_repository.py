@@ -146,6 +146,24 @@ def test_phone_number_non_digits_raises(repo):
         repo.save(make_customer(phone_number="041234abc8"))
 
 
+def test_find_by_phone_number_returns_customer(repo):
+    repo.save(make_customer(phone_number="0412345678"))
+    result = repo.find_by_phone_number("0412345678")
+    assert result is not None
+    assert result.email == "john.smith@example.com"
+
+
+def test_find_by_phone_number_returns_none_when_not_found(repo):
+    repo.save(make_customer(phone_number="0412345678"))
+    assert repo.find_by_phone_number("0499999999") is None
+
+
+def test_phone_number_must_be_unique(repo):
+    repo.save(make_customer(email="a@b.co", phone_number="0412345678"))
+    with pytest.raises(sqlite3.IntegrityError):
+        repo.save(make_customer(email="c@d.co", phone_number="0412345678"))
+
+
 def test_password_lower_bound(repo):
     repo.save(make_customer(password="a" * 60))
     assert repo.find_by_email("john.smith@example.com") is not None

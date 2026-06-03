@@ -352,6 +352,26 @@ def test_book_valid_insert_succeeds(isolated_db):
     conn.close()
 
 
+def test_phone_number_must_be_unique(isolated_db):
+    # The UNIQUE constraint on phone_number should reject a second customer
+    # with the same non-null phone number.
+    init_db()
+    conn = get_connection()
+    conn.execute(
+        "INSERT INTO customers (first_name, last_name, email, phone_number, password) "
+        "VALUES (?, ?, ?, ?, ?)",
+        ("John", "Smith", "a@b.co", "0412345678", "a" * 60),
+    )
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute(
+            "INSERT INTO customers (first_name, last_name, email, "
+            "phone_number, password) "
+            "VALUES (?, ?, ?, ?, ?)",
+            ("Jane", "Doe", "c@d.co", "0412345678", "b" * 60),
+        )
+    conn.close()
+
+
 # ============================================================================
 # _seed_books
 # Tests that the seed loader reads data.json and populates the books table

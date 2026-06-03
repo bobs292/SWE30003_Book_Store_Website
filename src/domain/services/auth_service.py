@@ -14,7 +14,12 @@ class AuthService:
         (r"[0-9]", "at least one digit"),
     ]
     EMAIL_PATTERN = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
-    PHONE_PATTERN = r"^[0-9+\-\s\(\)]{7,15}$"
+    PHONE_PATTERN = re.compile(
+        r"^("
+        r"\+614\d{8}"  # International: +61 4xx xxx xxx
+        r"|04\d{8}"  # Domestic mobile: 04xx xxx xxx
+        r")$"
+    )
 
     def __init__(self, customer_repo: CustomerRepository):
         self.customer_repo = customer_repo
@@ -33,25 +38,29 @@ class AuthService:
 
     def _validate_formats(self, email=None, phone_number=None):
         """Validate format of email and phone without hitting the DB.
-        Returns dict of field → error message."""
+        Returns (errors_dict, cleaned_phone)."""
         errors = {}
+        cleaned_phone = phone_number
         if email and not re.match(self.EMAIL_PATTERN, email):
             errors["email"] = "Enter a valid email address."
-        if phone_number and not re.match(self.PHONE_PATTERN, phone_number):
-            errors["phone_number"] = "Enter a valid phone number."
-        return errors
+        if phone_number:
+            cleaned_phone = phone_number.replace(" ", "")
+            if not re.match(self.PHONE_PATTERN, cleaned_phone):
+                errors["phone_number"] = "Enter a valid phone number."
+        return errors, cleaned_phone
 
     def validate(self, email=None, phone_number=None, password=None):
         """Presentation-layer validation: format checks first, then uniqueness.
         Returns dict of field → error message."""
-        errors = self._validate_formats(email=email, phone_number=phone_number)
+        errors, cleaned_phone = self._validate_formats(
+            email=email, phone_number=phone_number
+        )
 
-        # Only query DB if format is valid (avoids wasteful lookups)
         if email and "email" not in errors:
             if self.customer_repo.find_by_email(email):
                 errors["email"] = "An account with this email already exists."
-        if phone_number and "phone_number" not in errors:
-            if self.customer_repo.find_by_phone_number(phone_number):
+        if cleaned_phone and "phone_number" not in errors:
+            if self.customer_repo.find_by_phone_number(cleaned_phone):
                 errors["phone_number"] = "This phone number is already registered."
 
         pw_errors = self._validate_password(password)
@@ -63,12 +72,10 @@ class AuthService:
     def register(
         self, first_name, last_name, email, password, phone_number=None, address=None
     ):
-        # Reuse validate() — single source of truth for all checks
         errors = self.validate(
             email=email, phone_number=phone_number, password=password
         )
 
-        # Validate required text fields
         if not first_name or not first_name.strip():
             errors["first_name"] = "First name is required."
         if not last_name or not last_name.strip():
@@ -77,12 +84,15 @@ class AuthService:
         if errors:
             raise ValueError(", ".join(errors.values()))
 
+        # Normalize phone number — strip spaces before storing
+        cleaned_phone = phone_number.replace(" ", "") if phone_number else None
+
         customer = Customer(
             first_name=first_name,
             last_name=last_name,
             email=email,
             password=generate_password_hash(password),
-            phone_number=phone_number,
+            phone_number=cleaned_phone,
             address=address,
         )
         self.customer_repo.save(customer)

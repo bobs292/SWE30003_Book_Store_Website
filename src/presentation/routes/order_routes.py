@@ -1,5 +1,6 @@
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
+#TODO Reimplement logic verification logic LINE 201 + 232
 
 def _coerce_int(value, default=0):
     try:
@@ -166,7 +167,6 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
 
     @order.route("/confirmation/<int:order_id>")
     def confirmation(order_id):
-        # You can fetch order and invoice from repositories if needed
         return render_template("order_confirmation.html", order_id=order_id)
             
     @order.route("/checkout", methods=["GET", "POST"])
@@ -183,7 +183,7 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
             if not cart_data:
                 flash("Your cart is empty.", "error")
                 return redirect(url_for("order.cart"))
-        # 3. Retrieve full book details (needed for the service)
+        #Retrieve full book details (needed for the service)
             books = catalogue_service.list_books()
             cart_items, subtotal = _build_cart_items(books, cart_data)
             if not cart_items:
@@ -198,6 +198,7 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
                     "unit_price": item["book"]["price"]
                 })
             customer_id = 1 
+
         # # Check if the customer is logged in
         #     customer_id = session.get("user_id")  
         #     if not customer_id:

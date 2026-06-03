@@ -131,10 +131,17 @@ def test_validate_formats_strips_spaces_from_phone(service):
     assert cleaned == "0412345678"
 
 
-def test_validate_formats_international_phone(service):
+def test_validate_formats_international_phone_with_plus(service):
     errors, cleaned = service._validate_formats(phone_number="+61412345678")
     assert errors == {}
     assert cleaned == "+61412345678"
+
+
+def test_validate_formats_international_phone_without_plus(service):
+    # 614xxxxxxxx without the leading + should also be accepted.
+    errors, cleaned = service._validate_formats(phone_number="61412345678")
+    assert errors == {}
+    assert cleaned == "61412345678"
 
 
 def test_validate_formats_none_email_and_phone(service):

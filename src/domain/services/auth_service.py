@@ -17,8 +17,8 @@ class AuthService:
     EMAIL_PATTERN = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
     PHONE_PATTERN = re.compile(
         r"^("
-        r"\+614\d{8}"  # International: +61 4xx xxx xxx
-        r"|04\d{8}"  # Domestic mobile: 04xx xxx xxx
+        r"\+?614\d{8}"  # International: +614xxxxxxxx or 614xxxxxxxx
+        r"|04\d{8}"  # Domestic mobile: 04xxxxxxxx
         r")$"
     )
 

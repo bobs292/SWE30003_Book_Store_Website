@@ -292,6 +292,88 @@ def test_register_invalid_password_raises(service, repo):
         service.register("John", "Smith", "a@b.co", "short")
 
 
+# --- _validate_address_formats ---
+
+
+def test_validate_address_formats_valid_returns_empty(service):
+    assert (
+        service._validate_address_formats(
+            street="1 Main St", suburb="Melbourne", state="VIC", postcode="3000"
+        )
+        == {}
+    )
+
+
+def test_validate_address_formats_postcode_too_long(service):
+    errors = service._validate_address_formats(postcode="301667")
+    assert "postcode" in errors
+
+
+def test_validate_address_formats_postcode_too_short(service):
+    errors = service._validate_address_formats(postcode="300")
+    assert "postcode" in errors
+
+
+def test_validate_address_formats_postcode_non_digits(service):
+    errors = service._validate_address_formats(postcode="3OOO")
+    assert "postcode" in errors
+
+
+def test_validate_address_formats_state_too_long(service):
+    errors = service._validate_address_formats(state="VICTORIA")
+    assert "state" in errors
+
+
+def test_validate_address_formats_state_non_letters(service):
+    errors = service._validate_address_formats(state="V1")
+    assert "state" in errors
+
+
+def test_validate_address_formats_street_over_limit(service):
+    errors = service._validate_address_formats(street="A" * 101)
+    assert "street" in errors
+
+
+def test_validate_address_formats_suburb_over_limit(service):
+    errors = service._validate_address_formats(suburb="A" * 51)
+    assert "suburb" in errors
+
+
+def test_validate_address_formats_none_fields_returns_empty(service):
+    assert service._validate_address_formats() == {}
+
+
+# --- validate — address format integration ---
+
+
+def test_validate_returns_postcode_error_for_invalid_postcode(service):
+    errors = service.validate(email="a@b.co", password="Passw0rd", postcode="301667")
+    assert "postcode" in errors
+
+
+def test_validate_returns_state_error_for_invalid_state(service):
+    errors = service.validate(email="a@b.co", password="Passw0rd", state="VICTORIA")
+    assert "state" in errors
+
+
+def test_validate_skips_smartystreets_when_address_format_invalid(repo):
+    # SmartyStreets must not be called when a local format check already failed.
+    from unittest.mock import MagicMock
+
+    spy = MagicMock()
+    spy.validate.return_value = None
+    svc = AuthService(customer_repo=repo, address_validator=spy)
+    svc.validate(
+        email="a@b.co",
+        password="Passw0rd",
+        street="1 Main St",
+        suburb="Melbourne",
+        state="VICTORIA",
+        postcode="3000",
+    )
+    spy.validate.assert_not_called()
+
+
 # --- _validate_address ---
 
 

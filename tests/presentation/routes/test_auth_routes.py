@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 from flask import Flask
@@ -49,7 +49,7 @@ def test_register_get_returns_200(client):
 def test_register_get_renders_register_template(client):
     with patch(_RENDER, return_value="form") as mock_render:
         client.get("/register")
-    mock_render.assert_called_once_with("register.html")
+    mock_render.assert_called_once_with("register.html", errors={}, form={})
 
 
 # ============================================================================
@@ -57,6 +57,7 @@ def test_register_get_renders_register_template(client):
 
 
 def test_register_post_valid_redirects_to_login(client, auth_service):
+    auth_service.validate.return_value = {}
     auth_service.register.return_value = None
     response = client.post(
         "/register",
@@ -72,6 +73,7 @@ def test_register_post_valid_redirects_to_login(client, auth_service):
 
 
 def test_register_post_calls_service_with_form_fields(client, auth_service):
+    auth_service.validate.return_value = {}
     auth_service.register.return_value = None
     client.post(
         "/register",
@@ -102,6 +104,7 @@ def test_register_post_calls_service_with_form_fields(client, auth_service):
 def test_register_post_empty_phone_passed_as_none(client, auth_service):
     # An empty phone field must be coerced to None so the service sees an
     # absent value rather than an empty string that would fail format checks.
+    auth_service.validate.return_value = {}
     auth_service.register.return_value = None
     client.post(
         "/register",
@@ -120,6 +123,7 @@ def test_register_post_empty_phone_passed_as_none(client, auth_service):
 def test_register_post_empty_address_fields_passed_as_none(client, auth_service):
     # Empty address fields must be coerced to None so the service treats the
     # address as absent rather than triggering validation on blank strings.
+    auth_service.validate.return_value = {}
     auth_service.register.return_value = None
     client.post(
         "/register",
@@ -142,9 +146,9 @@ def test_register_post_empty_address_fields_passed_as_none(client, auth_service)
 
 
 def test_register_post_invalid_rerenders_form(client, auth_service):
-    # When the service raises ValueError the route must re-render the form
-    # (200) rather than redirecting, so the user can correct their input.
-    auth_service.register.side_effect = ValueError("Password must contain...")
+    # When validate() returns errors the route re-renders the form (200)
+    # rather than redirecting so the user can correct their input.
+    auth_service.validate.return_value = {"password": "Password must contain..."}
     with patch(_RENDER, return_value="form"):
         response = client.post(
             "/register",
@@ -159,7 +163,9 @@ def test_register_post_invalid_rerenders_form(client, auth_service):
 
 
 def test_register_post_invalid_renders_register_template(client, auth_service):
-    auth_service.register.side_effect = ValueError("error")
+    auth_service.validate.return_value = {
+        "email": "An account with this email already exists."
+    }
     with patch(_RENDER, return_value="form") as mock_render:
         client.post(
             "/register",
@@ -170,7 +176,27 @@ def test_register_post_invalid_renders_register_template(client, auth_service):
                 "password": "bad",
             },
         )
-    mock_render.assert_called_once_with("register.html")
+    mock_render.assert_called_once_with("register.html", errors=ANY, form=ANY)
+
+
+def test_register_post_errors_passed_to_template(client, auth_service):
+    # The errors dict from validate() must be forwarded to the template so
+    # the form can highlight individual fields.
+    auth_service.validate.return_value = {
+        "email": "An account with this email already exists."
+    }
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.post(
+            "/register",
+            data={
+                "first_name": "J",
+                "last_name": "S",
+                "email": "j@s.co",
+                "password": "bad",
+            },
+        )
+    _, kwargs = mock_render.call_args
+    assert "email" in kwargs["errors"]
 
 
 # ============================================================================

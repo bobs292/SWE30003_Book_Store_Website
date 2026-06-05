@@ -63,6 +63,21 @@ class AuthService:
                 errors["phone_number"] = "Enter a valid phone number."
         return errors, cleaned_phone
 
+    @staticmethod
+    def _validate_address_formats(street=None, suburb=None, state=None, postcode=None):
+        """Local format checks matching the DB constraints. Returns a dict of
+        field → error for any field that fails. Does not hit any external API."""
+        errors = {}
+        if postcode and not re.fullmatch(r"\d{4}", postcode):
+            errors["postcode"] = "Postcode must be exactly 4 digits (e.g. 3000)."
+        if state and not re.fullmatch(r"[A-Za-z]{2,3}", state):
+            errors["state"] = "State must be 2 or 3 letters (e.g. VIC, NSW)."
+        if street and len(street) > 100:
+            errors["street"] = "Street address must be 100 characters or fewer."
+        if suburb and len(suburb) > 50:
+            errors["suburb"] = "Suburb must be 50 characters or fewer."
+        return errors
+
     def _validate_address(self, street=None, suburb=None, state=None, postcode=None):
         # Address is optional — skip the API call when no fields are provided.
         if not any([street, suburb, state, postcode]):
@@ -95,12 +110,17 @@ class AuthService:
         if pw_errors:
             errors["password"] = "Password must contain " + ", ".join(pw_errors) + "."
 
-        # Validate address via SmartyStreets if any address field was supplied.
-        addr_error = self._validate_address(
+        # Local format checks first — skip the API if any format is already wrong.
+        addr_format_errors = self._validate_address_formats(
             street=street, suburb=suburb, state=state, postcode=postcode
         )
-        if addr_error:
-            errors["address"] = addr_error
+        errors.update(addr_format_errors)
+        if not addr_format_errors:
+            addr_error = self._validate_address(
+                street=street, suburb=suburb, state=state, postcode=postcode
+            )
+            if addr_error:
+                errors["address"] = addr_error
 
         return errors
 

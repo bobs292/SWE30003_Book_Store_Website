@@ -6,24 +6,43 @@ def create_auth_routes(auth_service):
 
     @auth.route("/register", methods=["GET", "POST"])
     def register():
+        errors = {}
+        form = {}
         if request.method == "POST":
-            try:
-                auth_service.register(
-                    first_name=request.form.get("first_name"),
-                    last_name=request.form.get("last_name"),
-                    email=request.form.get("email"),
-                    password=request.form.get("password"),
-                    phone_number=request.form.get("phone_number") or None,
-                    street=request.form.get("street") or None,
-                    suburb=request.form.get("suburb") or None,
-                    state=request.form.get("state") or None,
-                    postcode=request.form.get("postcode") or None,
-                )
-                flash("Registration successful. Please log in.", "success")
-                return redirect(url_for("auth.login"))
-            except ValueError as e:
-                flash(str(e), "error")
-        return render_template("register.html")
+            form = request.form.to_dict()
+            errors = auth_service.validate(
+                email=form.get("email") or None,
+                phone_number=form.get("phone_number") or None,
+                password=form.get("password"),
+                street=form.get("street") or None,
+                suburb=form.get("suburb") or None,
+                state=form.get("state") or None,
+                postcode=form.get("postcode") or None,
+            )
+            if not (form.get("first_name") or "").strip():
+                errors["first_name"] = "First name is required."
+            if not (form.get("last_name") or "").strip():
+                errors["last_name"] = "Last name is required."
+
+            if not errors:
+                try:
+                    auth_service.register(
+                        first_name=form.get("first_name"),
+                        last_name=form.get("last_name"),
+                        email=form.get("email"),
+                        password=form.get("password"),
+                        phone_number=form.get("phone_number") or None,
+                        street=form.get("street") or None,
+                        suburb=form.get("suburb") or None,
+                        state=form.get("state") or None,
+                        postcode=form.get("postcode") or None,
+                    )
+                    flash("Registration successful. Please log in.", "success")
+                    return redirect(url_for("auth.login"))
+                except ValueError as e:
+                    flash(str(e), "error")
+
+        return render_template("register.html", errors=errors, form=form)
 
     @auth.route("/login", methods=["GET", "POST"])
     def login():

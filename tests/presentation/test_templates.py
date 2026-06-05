@@ -94,7 +94,7 @@ def app(stub_repo):
 
     @auth_bp.route("/register")
     def register():
-        return render_template("register.html")
+        return render_template("register.html", errors={}, form={})
 
     @auth_bp.route("/login")
     def login():

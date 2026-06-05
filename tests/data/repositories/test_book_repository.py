@@ -40,8 +40,8 @@ class TestSqliteBookRepository:
             books = repo.list_books()
 
         assert len(books) == 2
-        assert books[0]["title"] == "Book A"
-        assert books[1]["title"] == "Book B"
+        assert books[0].title == "Book A"
+        assert books[1].title == "Book B"
 
     def test_get_by_id_returns_correct_book(self):
         # get_by_id should return the matching book with id and cover_url set.
@@ -68,8 +68,8 @@ class TestSqliteBookRepository:
                 repo = SqliteBookRepository()
                 book = repo.get_by_id(1)
         assert book is not None
-        assert book["id"] == "111"
-        assert book["title"] == "Book A"
+        assert book.id == "111"
+        assert book.title == "Book A"
 
     def test_get_by_id_returns_none_for_missing_id(self):
         # When no row matches the given id, get_by_id should return None.
@@ -109,7 +109,7 @@ class TestSqliteBookRepository:
                 repo = SqliteBookRepository()
                 book = repo.get_by_id(1)
 
-        assert book["cover_url"] == "/static/images/covers/9780140449136.jpg"
+        assert book.cover_url == "/static/images/covers/9780140449136.jpg"
 
     def test_update_uses_isbn_column(self):
         # update() must use the isbn column, not a non-existent book_id column.
@@ -120,7 +120,9 @@ class TestSqliteBookRepository:
             mock_conn.return_value.cursor.return_value = mock_cursor
 
             repo = SqliteBookRepository()
-            repo.update({"id": "9780553418026", "stock": 3})
+            from src.domain.models.book_title import Book
+
+            repo.update(Book(id="9780553418026", stock=3))
 
         sql = mock_cursor.execute.call_args[0][0]
         assert "isbn" in sql.lower()
@@ -133,7 +135,9 @@ class TestSqliteBookRepository:
             mock_conn.return_value.cursor.return_value = mock_cursor
 
             repo = SqliteBookRepository()
-            repo.update({"id": "9780553418026", "stock": 7})
+            from src.domain.models.book_title import Book
+
+            repo.update(Book(id="9780553418026", stock=7))
 
         params = mock_cursor.execute.call_args[0][1]
         assert params[0] == 7  # new stock
@@ -165,4 +169,4 @@ class TestSqliteBookRepository:
                 repo = SqliteBookRepository()
                 book = repo.get_by_id(1)
 
-        assert book["cover_url"] is None
+        assert book.cover_url is None

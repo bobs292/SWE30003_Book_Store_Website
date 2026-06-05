@@ -18,9 +18,9 @@ class SearchService:
     @staticmethod
     def _matches_query(book, query):
         """Checks if a book matches the search query."""
-        isbn = str(book.get("id", "")).lower()
-        title = book.get("title", "").lower()
-        author = book.get("author", "").lower()
+        isbn = str(book.id).lower()
+        title = book.title.lower()
+        author = book.author.lower()
 
         isbn_match = isbn.startswith(query)
         title_match = query in title

@@ -99,7 +99,9 @@ def create_app():
 
     # Registers the order routes with the catalogue service injected.
     app.register_blueprint(
-        create_order_routes(catalogue_service, checkout_service, customer_repo)
+        create_order_routes(
+            catalogue_service, checkout_service, customer_repo, address_validator
+        )
     )
 
     # Registers the homepage route directly on the app rather than a blueprint
@@ -109,7 +111,7 @@ def create_app():
         books = catalogue_service.list_books()
         collections = {}
         for book in books:
-            genre = book.get("genre", "General")
+            genre = book.genre
             collections.setdefault(genre, []).append(book)
         return render_template("home.html", collections=collections)
 

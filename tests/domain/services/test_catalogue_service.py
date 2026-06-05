@@ -1,10 +1,11 @@
 from unittest.mock import MagicMock
 
+from src.domain.models.book_title import Book
 from src.domain.services.catalogue_service import CatalogueService
 
 BOOKS = [
-    {"id": "9780553418026", "title": "The Martian", "price": 18.99, "stock": 5},
-    {"id": "9780307588371", "title": "Gone Girl", "price": 19.99, "stock": 0},
+    Book(id="9780553418026", title="The Martian", price=18.99, stock=5),
+    Book(id="9780307588371", title="Gone Girl", price=19.99, stock=0),
 ]
 
 
@@ -13,7 +14,7 @@ def _make_repo(books=None):
     repo = MagicMock()
     repo.list_books.return_value = _books
     repo.get_by_id.side_effect = lambda book_id: next(
-        (b for b in _books if b["id"] == book_id), None
+        (b for b in _books if b.id == book_id), None
     )
     return repo
 
@@ -54,7 +55,7 @@ def test_get_book_delegates_to_repository():
 
 def test_get_book_returns_matching_book():
     result = CatalogueService(_make_repo()).get_book("9780553418026")
-    assert result["title"] == "The Martian"
+    assert result.title == "The Martian"
 
 
 def test_get_book_returns_none_for_missing_id():
@@ -67,10 +68,10 @@ def test_get_book_returns_none_for_missing_id():
 
 def test_get_all_genres_returns_sorted_unique():
     books = [
-        {"id": 1, "title": "Book 1", "genre": "Fantasy"},
-        {"id": 2, "title": "Book 2", "genre": "Science Fiction"},
-        {"id": 3, "title": "Book 3", "genre": "Fantasy"},
-        {"id": 4, "title": "Book 4", "genre": "Dystopian"},
+        Book(id="1", title="Book 1", genre="Fantasy"),
+        Book(id="2", title="Book 2", genre="Science Fiction"),
+        Book(id="3", title="Book 3", genre="Fantasy"),
+        Book(id="4", title="Book 4", genre="Dystopian"),
     ]
     repo = _make_repo(books)
     genres = CatalogueService(repo).get_all_genres()
@@ -91,20 +92,20 @@ def test_get_all_genres_empty_catalogue():
 
 def test_filter_by_genre_filters_correctly():
     books = [
-        {"id": 1, "title": "Book 1", "genre": "Fantasy"},
-        {"id": 2, "title": "Book 2", "genre": "Science Fiction"},
+        Book(id="1", title="Book 1", genre="Fantasy"),
+        Book(id="2", title="Book 2", genre="Science Fiction"),
     ]
     service = CatalogueService(_make_repo(books))
     result = service.filter_by_genre(books, "Fantasy")
 
     assert len(result) == 1
-    assert result[0]["title"] == "Book 1"
+    assert result[0].title == "Book 1"
 
 
 def test_filter_by_genre_empty_returns_all():
     books = [
-        {"id": 1, "title": "Book 1", "genre": "Fantasy"},
-        {"id": 2, "title": "Book 2", "genre": "Science Fiction"},
+        Book(id="1", title="Book 1", genre="Fantasy"),
+        Book(id="2", title="Book 2", genre="Science Fiction"),
     ]
     service = CatalogueService(_make_repo(books))
     result = service.filter_by_genre(books, "")
@@ -118,56 +119,56 @@ def test_filter_by_genre_empty_returns_all():
 
 def test_sort_books_by_title():
     books = [
-        {"id": 2, "title": "Zebra", "author": "Author A", "price": 10},
-        {"id": 1, "title": "Apple", "author": "Author B", "price": 20},
+        Book(id="2", title="Zebra", author="Author A", price=10),
+        Book(id="1", title="Apple", author="Author B", price=20),
     ]
     service = CatalogueService(_make_repo(books))
     result = service.sort_books(books, "title")
 
-    assert result[0]["title"] == "Apple"
-    assert result[1]["title"] == "Zebra"
+    assert result[0].title == "Apple"
+    assert result[1].title == "Zebra"
 
 
 def test_sort_books_by_author():
     books = [
-        {"id": 1, "title": "Book 1", "author": "Zoe", "price": 10},
-        {"id": 2, "title": "Book 2", "author": "Alice", "price": 20},
+        Book(id="1", title="Book 1", author="Zoe", price=10),
+        Book(id="2", title="Book 2", author="Alice", price=20),
     ]
     service = CatalogueService(_make_repo(books))
     result = service.sort_books(books, "author")
 
-    assert result[0]["author"] == "Alice"
-    assert result[1]["author"] == "Zoe"
+    assert result[0].author == "Alice"
+    assert result[1].author == "Zoe"
 
 
 def test_sort_books_by_price_low():
     books = [
-        {"id": 1, "title": "Book 1", "author": "Author A", "price": 20},
-        {"id": 2, "title": "Book 2", "author": "Author B", "price": 10},
+        Book(id="1", title="Book 1", author="Author A", price=20),
+        Book(id="2", title="Book 2", author="Author B", price=10),
     ]
     service = CatalogueService(_make_repo(books))
     result = service.sort_books(books, "price-low")
 
-    assert result[0]["price"] == 10
-    assert result[1]["price"] == 20
+    assert result[0].price == 10
+    assert result[1].price == 20
 
 
 def test_sort_books_by_price_high():
     books = [
-        {"id": 1, "title": "Book 1", "author": "Author A", "price": 20},
-        {"id": 2, "title": "Book 2", "author": "Author B", "price": 10},
+        Book(id="1", title="Book 1", author="Author A", price=20),
+        Book(id="2", title="Book 2", author="Author B", price=10),
     ]
     service = CatalogueService(_make_repo(books))
     result = service.sort_books(books, "price-high")
 
-    assert result[0]["price"] == 20
-    assert result[1]["price"] == 10
+    assert result[0].price == 20
+    assert result[1].price == 10
 
 
 def test_sort_books_invalid_returns_original():
     books = [
-        {"id": 2, "title": "Zebra"},
-        {"id": 1, "title": "Apple"},
+        Book(id="2", title="Zebra"),
+        Book(id="1", title="Apple"),
     ]
     service = CatalogueService(_make_repo(books))
     result = service.sort_books(books, "invalid")

@@ -35,9 +35,9 @@ class Order:
     """
 
     order_id: Optional[int] = None
-    customer_id: int = None
-    order_date: datetime = None
-    total_amount: float = None
-    shipping_address: str = None
-    shipping_phone: str = None
+    customer_id: Optional[int] = None
+    order_date: Optional[datetime] = None
+    total_amount: Optional[float] = None
+    shipping_address: Optional[str] = None
+    shipping_phone: Optional[str] = None
     items: List[OrderItem] = field(default_factory=list)

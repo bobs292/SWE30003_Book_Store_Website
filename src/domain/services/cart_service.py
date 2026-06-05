@@ -38,7 +38,7 @@ class CartService:
         """
         items = []
         subtotal = 0.0
-        books_by_id = {str(book["id"]): book for book in books}
+        books_by_id = {str(book.id): book for book in books}
         cart_changed = False
 
         for book_id in list(cart.keys()):
@@ -54,7 +54,7 @@ class CartService:
                 continue
 
             book = books_by_id[book_id]
-            price = CartService.safe_float(book.get("price", 0.0), 0.0)
+            price = CartService.safe_float(book.price, 0.0)
             line_total = price * quantity
             subtotal += line_total
             items.append(

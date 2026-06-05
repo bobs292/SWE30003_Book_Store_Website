@@ -5,6 +5,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from src.domain.gateways.address_gateway import AddressGateway
 from src.domain.models.customer import Address, Customer
 from src.domain.repositories.customer_repository import CustomerRepository
+from src.domain.services.phone_service import PhoneService
 
 
 class AuthService:
@@ -15,8 +16,6 @@ class AuthService:
         (r"[0-9]", "at least one digit"),
     ]
     EMAIL_PATTERN = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
-    # Pattern checked AFTER normalisation, so only domestic form is needed.
-    PHONE_PATTERN = re.compile(r"^04\d{8}$")
 
     def __init__(
         self, customer_repo: CustomerRepository, address_validator: AddressGateway
@@ -36,20 +35,6 @@ class AuthService:
                 errors.append(message)
         return errors
 
-    @staticmethod
-    def _normalize_phone(phone_number):
-        """Return phone in domestic format (04XXXXXXXX), stripping spaces.
-        +61XXXXXXXXX and 61XXXXXXXXX are both converted to 0XXXXXXXXX so that
-        the same number in different formats maps to one canonical value."""
-        if not phone_number:
-            return phone_number
-        n = phone_number.replace(" ", "")
-        if n.startswith("+61"):
-            n = "0" + n[3:]
-        elif n.startswith("61") and len(n) == 11:
-            n = "0" + n[2:]
-        return n
-
     def _validate_formats(self, email=None, phone_number=None):
         """Validate format of email and phone without hitting the DB.
         Returns (errors_dict, cleaned_phone) where cleaned_phone is normalised."""
@@ -58,8 +43,8 @@ class AuthService:
         if email and not re.match(self.EMAIL_PATTERN, email):
             errors["email"] = "Enter a valid email address."
         if phone_number:
-            cleaned_phone = self._normalize_phone(phone_number)
-            if not re.match(self.PHONE_PATTERN, cleaned_phone):
+            cleaned_phone = PhoneService.normalize_australian_phone(phone_number)
+            if not PhoneService.is_valid_australian_mobile(cleaned_phone):
                 errors["phone_number"] = "Enter a valid phone number."
         return errors, cleaned_phone
 
@@ -154,7 +139,11 @@ class AuthService:
         if errors:
             raise ValueError(", ".join(errors.values()))
 
-        cleaned_phone = self._normalize_phone(phone_number) if phone_number else None
+        cleaned_phone = (
+            PhoneService.normalize_australian_phone(phone_number)
+            if phone_number
+            else None
+        )
 
         # Construct an Address object only when at least one field was provided.
         address = None

@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from src.domain.models.book_title import Book
 from src.domain.models.invoice import Invoice
 from src.domain.models.order import Order
 from src.domain.services.checkout_service import CheckoutService
@@ -11,14 +12,14 @@ from src.domain.services.checkout_service import CheckoutService
 
 
 def _make_book(book_id, title="Test Book", stock=10, price=19.99):
-    return {"id": book_id, "title": title, "price": price, "stock": stock}
+    return Book(id=str(book_id), title=title, price=price, stock=stock)
 
 
 def _make_book_repo(*books):
-    index = {b["id"]: dict(b) for b in books}  # copy so stock mutations are visible
+    index = {b.id: b for b in books}
     repo = MagicMock()
-    repo.get_by_id.side_effect = lambda book_id: index.get(book_id)
-    repo.update.side_effect = lambda book: index.update({book["id"]: book})
+    repo.get_by_id.side_effect = lambda book_id: index.get(str(book_id))
+    repo.update.side_effect = lambda book: None
     return repo
 
 
@@ -260,7 +261,7 @@ def test_stock_reduced_by_quantity_purchased():
     cart = [{"book_id": 1, "quantity": 3, "unit_price": 19.99}]
     service.process_checkout(1, cart, "1 Main St", "0412345678", {})
     updated = book_repo.update.call_args[0][0]
-    assert updated["stock"] == 7
+    assert updated.stock == 7
 
 
 def test_stock_reduced_for_every_item_in_cart():

@@ -3,30 +3,29 @@ from unittest.mock import MagicMock
 import pytest
 from flask import Blueprint, Flask
 
+from src.domain.models.book_title import Book
+from src.domain.services.search_service import SearchService
 from src.presentation.routes.catalogue_routes import create_catalogue_routes
 
-# All fields that catalogue.html references for each book.
 BOOKS = [
-    {
-        "id": 1,
-        "title": "The Hobbit",
-        "author": "J.R.R. Tolkien",
-        "genre": "Fantasy",
-        "description": "A hobbit goes on an adventure.",
-        "price": 19.99,
-        "stock": 5,
-        "cover_url": None,
-    },
-    {
-        "id": 2,
-        "title": "Dune",
-        "author": "Frank Herbert",
-        "genre": "Science Fiction",
-        "description": "A desert planet epic.",
-        "price": 24.99,
-        "stock": 0,
-        "cover_url": None,
-    },
+    Book(
+        id="1",
+        title="The Hobbit",
+        author="J.R.R. Tolkien",
+        genre="Fantasy",
+        description="A hobbit goes on an adventure.",
+        price=19.99,
+        stock=5,
+    ),
+    Book(
+        id="2",
+        title="Dune",
+        author="Frank Herbert",
+        genre="Science Fiction",
+        description="A desert planet epic.",
+        price=24.99,
+        stock=0,
+    ),
 ]
 
 
@@ -40,38 +39,40 @@ class FakeCatalogueService:
         return self._books
 
     def get_book(self, isbn):
-        return next((b for b in self._books if str(b["id"]) == str(isbn)), None)
+        return next((b for b in self._books if str(b.id) == str(isbn)), None)
 
     def get_all_genres(self):
-        """Returns sorted list of unique genres from all books."""
-        genres = set(book.get("genre", "General") for book in self._books)
+        genres = set(book.genre for book in self._books)
         return sorted(genres)
 
     def filter_by_genre(self, books, genre):
-        """Filters books by genre. Returns all books if genre is empty."""
         if not genre or not genre.strip():
             return books
         genre = genre.strip()
-        return [b for b in books if b.get("genre", "General") == genre]
+        return [b for b in books if b.genre == genre]
 
     def sort_books(self, books, sort_by="title"):
-        """Sorts books by specified criteria."""
         sort_by = (sort_by or "title").strip()
-
         if sort_by == "price-low":
-            return sorted(books, key=lambda b: float(b.get("price", 0)))
+            return sorted(books, key=lambda b: float(b.price))
         elif sort_by == "price-high":
-            return sorted(books, key=lambda b: float(b.get("price", 0)), reverse=True)
+            return sorted(books, key=lambda b: float(b.price), reverse=True)
         elif sort_by == "author":
-            return sorted(books, key=lambda b: b.get("author", "").lower())
+            return sorted(books, key=lambda b: b.author.lower())
         elif sort_by == "title":
-            return sorted(books, key=lambda b: b.get("title", "").lower())
+            return sorted(books, key=lambda b: b.title.lower())
         else:
             return books
 
     def get_valid_sort_options(self):
-        """Returns list of valid sort option values."""
         return self.VALID_SORT_OPTIONS.copy()
+
+    def browse(self, search_query="", genre="", sort_by="title"):
+        books = self.list_books()
+        books = SearchService.search_books(books, search_query)
+        books = self.filter_by_genre(books, genre)
+        books = self.sort_books(books, sort_by)
+        return books
 
 
 def _make_app(catalogue_service):
@@ -79,7 +80,6 @@ def _make_app(catalogue_service):
     app.config["TESTING"] = True
     app.config["SECRET_KEY"] = "test"
 
-    # Stub routes required by base.html url_for calls.
     @app.route("/")
     def homepage():
         return ""
@@ -134,12 +134,13 @@ def test_catalogue_get_returns_200(client):
     assert response.status_code == 200
 
 
-def test_catalogue_calls_list_books():
+def test_catalogue_calls_browse():
     mock_service = MagicMock()
-    mock_service.list_books.return_value = BOOKS
+    mock_service.browse.return_value = BOOKS
+    mock_service.get_all_genres.return_value = []
     app = _make_app(mock_service)
     app.test_client().get("/catalogue")
-    mock_service.list_books.assert_called_once()
+    mock_service.browse.assert_called_once()
 
 
 def test_catalogue_shows_book_titles(client):
@@ -168,13 +169,11 @@ def test_catalogue_shows_genre_tags(client):
 
 def test_catalogue_in_stock_book_has_add_to_cart_form(client):
     response = client.get("/catalogue")
-    # The Hobbit has stock > 0 so the add-to-cart form must appear.
     assert b"Add to cart" in response.data
 
 
 def test_catalogue_out_of_stock_book_shows_out_of_stock(client):
     response = client.get("/catalogue")
-    # Dune has stock == 0 so the out-of-stock label must appear.
     assert b"Out of stock" in response.data
 
 
@@ -206,7 +205,6 @@ def test_catalogue_cards_link_to_detail_page(client):
 
 
 def test_catalogue_shows_genre_filter_menu(client):
-    # The genre filter menu should show all genres.
     response = client.get("/catalogue")
     assert b"All Books" in response.data
     assert b"Fantasy" in response.data
@@ -214,24 +212,19 @@ def test_catalogue_shows_genre_filter_menu(client):
 
 
 def test_catalogue_filter_by_genre_shows_only_that_genre(client):
-    # Filtering by Fantasy should only show The Hobbit.
     response = client.get("/catalogue?genre=Fantasy")
     assert b"The Hobbit" in response.data
     assert b"Dune" not in response.data
 
 
 def test_catalogue_filter_by_genre_highlights_active_genre(client):
-    # The active genre should have the active class.
     response = client.get("/catalogue?genre=Fantasy")
-    # Check for the active genre link
     assert b'class="genre-link active"' in response.data
     assert b"Fantasy" in response.data
 
 
 def test_catalogue_all_books_link_shows_all_when_no_filter(client):
-    # With no genre filter, All Books should be active.
     response = client.get("/catalogue")
-    # All Books should be shown in the genre filter
     assert b"All Books" in response.data
 
 
@@ -240,7 +233,6 @@ def test_catalogue_all_books_link_shows_all_when_no_filter(client):
 
 
 def test_catalogue_shows_sort_options(client):
-    # The sort dropdown should be present.
     response = client.get("/catalogue")
     assert b'id="sort-select"' in response.data
     assert b"Title (A-Z)" in response.data
@@ -248,37 +240,30 @@ def test_catalogue_shows_sort_options(client):
 
 
 def test_catalogue_default_sort_is_title(client):
-    # Default sort should be by title.
     response = client.get("/catalogue")
     assert b"selected" in response.data
     assert b"Title (A-Z)" in response.data
 
 
 def test_catalogue_sort_by_price_low(client):
-    # Sorting by price low to high.
     response = client.get("/catalogue?sort=price-low")
     assert response.status_code == 200
-    # Verify the option is selected
     assert b'value="price-low"' in response.data
 
 
 def test_catalogue_sort_by_price_high(client):
-    # Sorting by price high to low.
     response = client.get("/catalogue?sort=price-high")
     assert response.status_code == 200
 
 
 def test_catalogue_sort_by_author(client):
-    # Sorting by author.
     response = client.get("/catalogue?sort=author")
     assert response.status_code == 200
 
 
 def test_catalogue_filter_and_sort_together(client):
-    # Should be able to filter by genre and sort at the same time.
     response = client.get("/catalogue?genre=Fantasy&sort=price-low")
     assert response.status_code == 200
-    # The Hobbit should be shown (Fantasy genre) and sorted by price
     assert b"The Hobbit" in response.data
     assert b"Dune" not in response.data
 
@@ -288,14 +273,12 @@ def test_catalogue_filter_and_sort_together(client):
 
 
 def test_catalogue_shows_search_box(client):
-    # The search input should be present on the catalogue page.
     response = client.get("/catalogue")
     assert b'class="search-input"' in response.data
     assert b"Start typing to search" in response.data
 
 
 def test_catalogue_search_by_title(client):
-    # Searching by title should filter books.
     response = client.get("/catalogue?search=Hobbit")
     assert response.status_code == 200
     assert b"The Hobbit" in response.data
@@ -303,7 +286,6 @@ def test_catalogue_search_by_title(client):
 
 
 def test_catalogue_search_by_author(client):
-    # Searching by author should filter books.
     response = client.get("/catalogue?search=Frank+Herbert")
     assert response.status_code == 200
     assert b"Dune" in response.data
@@ -311,27 +293,23 @@ def test_catalogue_search_by_author(client):
 
 
 def test_catalogue_search_case_insensitive(client):
-    # Search should be case insensitive.
     response = client.get("/catalogue?search=TOLKIEN")
     assert response.status_code == 200
     assert b"The Hobbit" in response.data
 
 
 def test_catalogue_search_no_results(client):
-    # Search with no matches should show empty message.
     response = client.get("/catalogue?search=xyz123nobook")
     assert response.status_code == 200
     assert b"No books are available" in response.data
 
 
 def test_catalogue_search_with_genre_filter(client):
-    # Should be able to search and filter by genre together.
     response = client.get("/catalogue?search=Fiction&genre=Fantasy")
     assert response.status_code == 200
 
 
 def test_catalogue_search_preserves_genre_and_sort(client):
-    # Search parameters should preserve genre and sort in the URL.
     response = client.get("/catalogue?search=Hobbit&genre=Fantasy&sort=price-low")
     assert response.status_code == 200
     assert b"The Hobbit" in response.data

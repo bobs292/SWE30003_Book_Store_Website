@@ -1,6 +1,8 @@
 import pytest
 from flask import Blueprint, Flask
 
+from src.domain.gateways.address_gateway import AddressGateway
+from src.domain.models.book_title import Book
 from src.presentation.routes.order_routes import create_order_routes
 
 # ============================================================================
@@ -11,8 +13,8 @@ from src.presentation.routes.order_routes import create_order_routes
 # Tests that need to check out-of-stock behaviour use book id 2.
 
 BOOKS = [
-    {"id": 1, "title": "The Hobbit", "price": 19.99, "stock": 5},
-    {"id": 2, "title": "Dune", "price": 24.99, "stock": 0},
+    Book(id="1", title="The Hobbit", price=19.99, stock=5),
+    Book(id="2", title="Dune", price=24.99, stock=0),
 ]
 
 
@@ -39,6 +41,11 @@ class FakeCheckoutService:
 
 class FakeCustomerRepo:
     def find_by_id(self, customer_id):
+        return None
+
+
+class FakeAddressGateway(AddressGateway):
+    def validate(self, street, suburb, state, postcode):
         return None
 
 
@@ -100,7 +107,10 @@ def app():
     app.register_blueprint(auth_bp)
 
     order_bp = create_order_routes(
-        FakeCatalogueService(), FakeCheckoutService(), FakeCustomerRepo()
+        FakeCatalogueService(),
+        FakeCheckoutService(),
+        FakeCustomerRepo(),
+        FakeAddressGateway(),
     )
     app.register_blueprint(order_bp)
     return app

@@ -152,33 +152,6 @@ def test_validate_formats_none_email_and_phone(service):
     assert cleaned is None
 
 
-# --- _normalize_phone ---
-
-
-def test_normalize_phone_domestic_unchanged(service):
-    assert service._normalize_phone("0412345678") == "0412345678"
-
-
-def test_normalize_phone_plus_international_to_domestic(service):
-    assert service._normalize_phone("+61412345678") == "0412345678"
-
-
-def test_normalize_phone_bare_international_to_domestic(service):
-    assert service._normalize_phone("61412345678") == "0412345678"
-
-
-def test_normalize_phone_strips_spaces(service):
-    assert service._normalize_phone("0412 345 678") == "0412345678"
-
-
-def test_normalize_phone_international_with_spaces(service):
-    assert service._normalize_phone("+614 12 345 678") == "0412345678"
-
-
-def test_normalize_phone_none_returns_none(service):
-    assert service._normalize_phone(None) is None
-
-
 # --- validate ---
 
 

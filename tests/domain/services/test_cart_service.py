@@ -1,10 +1,11 @@
 import pytest
 
+from src.domain.models.book_title import Book
 from src.domain.services.cart_service import CartService
 
 BOOKS = [
-    {"id": 1, "title": "The Hobbit", "price": 19.99, "stock": 5},
-    {"id": 2, "title": "Dune", "price": 24.99, "stock": 3},
+    Book(id="1", title="The Hobbit", price=19.99, stock=5),
+    Book(id="2", title="Dune", price=24.99, stock=3),
 ]
 
 

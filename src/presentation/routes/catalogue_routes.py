@@ -7,7 +7,6 @@ and searching by title, author, or ISBN.
 from flask import Blueprint, abort, render_template, request, session
 
 from src.domain.services.cart_service import CartService
-from src.domain.services.search_service import SearchService
 
 
 def create_catalogue_routes(catalogue_service):
@@ -24,17 +23,13 @@ def create_catalogue_routes(catalogue_service):
     @catalogue.route("/catalogue")
     def catalogue_page():
         """Displays the book catalogue with search, genre filtering, and sorting."""
-        books = catalogue_service.list_books()
         genres = catalogue_service.get_all_genres()
 
         search_query = request.args.get("search", "").strip()
         selected_genre = request.args.get("genre", "").strip()
         sort_by = request.args.get("sort", "title").strip()
 
-        books = SearchService.search_books(books, search_query)
-        books = catalogue_service.filter_by_genre(books, selected_genre)
-        books = catalogue_service.sort_books(books, sort_by)
-
+        books = catalogue_service.browse(search_query, selected_genre, sort_by)
         cart_data = CartService.normalize_cart(session.get("cart"))
 
         return render_template(

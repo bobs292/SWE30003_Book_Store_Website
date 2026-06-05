@@ -17,6 +17,6 @@ class Invoice:
     """
 
     invoice_id: Optional[int] = None
-    order_id: int = None
-    invoice_date: datetime = None
-    amount_due: float = None
+    order_id: Optional[int] = None
+    invoice_date: Optional[datetime] = None
+    amount_due: Optional[float] = None

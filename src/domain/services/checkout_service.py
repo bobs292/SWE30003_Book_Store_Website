@@ -5,13 +5,14 @@ order and invoice creation, and inventory updates.
 """
 
 from datetime import datetime
+from typing import Optional
 
+from src.domain.gateways.payment_gateway import PaymentGateway
 from src.domain.models.invoice import Invoice
 from src.domain.models.order import Order, OrderItem
 from src.domain.repositories.book_repository import BookRepository
 from src.domain.repositories.invoice_repository import InvoiceRepository
 from src.domain.repositories.order_repository import OrderRepository
-from src.domain.repositories.payment_gateway import PaymentGateway
 
 
 class CheckoutService:
@@ -46,7 +47,7 @@ class CheckoutService:
         shipping_address: str,
         shipping_phone: str,
         payment_details: dict,
-        shipping_fee: float = 9.99,
+        shipping_fee: Optional[float] = None,
     ):
         """Process checkout: validate stock, charge payment, create order.
 
@@ -69,14 +70,16 @@ class CheckoutService:
             ValueError: If book not found or stock is insufficient
             Exception: If payment processing fails
         """
+        if shipping_fee is None:
+            shipping_fee = self.STANDARD_SHIPPING_FEE
         # ensure stock is available and fetch book objects
         books = {}
         for item in cart_items:
             book = self.book_repo.get_by_id(item["book_id"])
             if not book:
                 raise ValueError(f"Book {item['book_id']} not found")
-            if book["stock"] < item["quantity"]:
-                raise ValueError(f"Insufficient stock for '{book['title']}'")
+            if book.stock < item["quantity"]:
+                raise ValueError(f"Insufficient stock for '{book.title}'")
             books[item["book_id"]] = book
 
         subtotal = sum(item["quantity"] * item["unit_price"] for item in cart_items)
@@ -115,10 +118,10 @@ class CheckoutService:
         )
         saved_invoice = self.invoice_repo.save(invoice)
 
-        # update stock, reduce by quantitiy
+        # update stock, reduce by quantity
         for item in cart_items:
             book = books[item["book_id"]]
-            book["stock"] -= item["quantity"]
+            book.stock -= item["quantity"]
             self.book_repo.update(book)
 
         return saved_order, saved_invoice

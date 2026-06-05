@@ -8,24 +8,50 @@ decisions.
 
 ---
 
+Add a single sentence at the top of the How to Install section stating the prerequisites, then include the existing steps. Example final "How to Install" section to paste into README:
+
 ## How to Install
+
+Prerequisites: Python (3.8+) and Git must be installed on all platforms.
 
 Clone the repository and create a virtual environment.
 
 ```bash
+git clone https://github.com/bobs292/SWE30003_Book_Store_Website.git
 cd SWE30003_Book_Store_Website
 python -m venv .venv
-source .venv/bin/activate
 ```
+
+Activate the virtual environment:
+
+- PowerShell (Windows, recommended)
+  ```powershell
+  .venv\Scripts\Activate.ps1
+  ```
+  If you see "running scripts is disabled on this system", allow scripts for the current user:
+  ```powershell
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+  ```
+  Or activate once without changing policy:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -NoProfile -Command ". .venv\Scripts\Activate.ps1"
+  ```
+
+- Command Prompt (cmd.exe, Windows)
+  ```cmd
+  .venv\Scripts\activate.bat
+  ```
+
+- Git Bash / macOS / Linux
+  ```bash
+  source .venv/bin/activate
+  ```
 
 Install the package and its dependencies.
 
 ```bash
 pip install -e .
 ```
-
----
-
 ## Secrets
 
 The app uses the [SmartyStreets International Street API](https://www.smarty.com/docs/apis/international-street-api) to verify Australian addresses at registration. Credentials are required to run the app and the address validation integration tests.

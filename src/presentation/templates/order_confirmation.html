@@ -1,6 +1,3 @@
-<!-- Displays Invoice. AKA Order Number, Items,
- Total Cost, Delivery Address -->
-<!-- Displays Invoice. AKA Order Number, Items, Total Cost, Delivery Address -->
 {% extends "base.html" %}
 {% block content %}
 <div class="page-header">
@@ -8,48 +5,71 @@
 </div>
 
 <h3>Order #{{ order.order_id }}</h3>
+<p>A confirmation has been sent to <strong>{{ customer.email }}</strong>.</p>
 <p><strong>Date:</strong> {{ order.order_date.strftime('%Y-%m-%d %H:%M') }}</p>
-
-<p><strong>Shipping Address:</strong> {{ order.shipping_address }}</p>
-
+<p><strong>{{ 'Pickup' if order.shipping_address == 'Store Pickup' else 'Shipping Address' }}:</strong>
+   {{ order.shipping_address }}</p>
+{% if order.shipping_phone %}
 <p><strong>Phone:</strong> {{ order.shipping_phone }}</p>
+{% endif %}
 
 <table class="cart-table">
-    <thead><tr><th>Book Title</th><th>Quantity</th><th>Unit Price</th><th>Total</th></tr></thead>
+    <thead>
+        <tr>
+            <th colspan="2">Book</th>
+            <th class="cell-center">Qty</th>
+            <th class="cell-center">Unit Price</th>
+            <th class="cell-center">Total</th>
+        </tr>
+    </thead>
     <tbody>
         {% for item in order.items %}
         <tr>
+            <td class="cart-cover-cell">
+                {% if item.book_cover_url %}
+                    <img src="{{ item.book_cover_url }}"
+                         alt="{{ item.book_title }}"
+                         class="cart-cover">
+                {% else %}
+                    <div class="cart-cover-fallback">
+                        {{ item.book_title[:2] }}
+                    </div>
+                {% endif %}
+            </td>
             <td>{{ item.book_title }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>${{ "%.2f"|format(item.unit_price) }}</td>
-            <td>${{ "%.2f"|format(item.quantity * item.unit_price) }}</td>
+            <td class="cell-center">{{ item.quantity }}</td>
+            <td class="cell-center">${{ "%.2f"|format(item.unit_price) }}</td>
+            <td class="cell-center">${{ "%.2f"|format(item.quantity * item.unit_price) }}</td>
         </tr>
         {% endfor %}
+        {% if shipping_fee and shipping_fee > 0 %}
         <tr>
-            <td colspan="3" style="text-align:right">
-                <strong>Shipping (flat rate)  </strong>
-            </td>
-            <td>
-                <strong>$9.99</strong>
-            </td>
+            <td colspan="4" style="text-align:right"><strong>Shipping (flat rate)</strong></td>
+            <td class="cell-center"><strong>${{ "%.2f"|format(shipping_fee) }}</strong></td>
         </tr>
+        {% else %}
+        <tr>
+            <td colspan="4" style="text-align:right"><strong>Shipping</strong></td>
+            <td class="cell-center"><strong>Free (Store Pickup)</strong></td>
+        </tr>
+        {% endif %}
     </tbody>
 </table>
 
 <div class="total-section">
-    <strong>Total (including shipping): ${{ "%.2f"|format(order.total_amount) }}</strong>
+    <strong>Total: ${{ "%.2f"|format(order.total_amount) }}</strong>
 </div>
 
-<h4>Invoice ID #{{ invoice.invoice_id }}</h4>
+<h4>Invoice #{{ invoice.invoice_id }}</h4>
 <p>Invoice date: {{ invoice.invoice_date.strftime('%Y-%m-%d %H:%M') }}</p>
 
 <a href="{{ url_for('catalogue.catalogue_page') }}" class="primary">Continue Shopping</a>
 
-
 <style>
 .total-section {
-  margin-top: 1rem;
-  padding-top: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    text-align: right;
 }
 </style>
 {% endblock %}

@@ -30,12 +30,14 @@ class SqliteBookRepository(BookRepository):
         if row is None:
             return None
         return self._row_to_dict(row)
-    
-    #updates changes to the book recorod
+
+    # updates changes to the book recorod
     def update(self, book):
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("UPDATE books SET stock = ? WHERE book_id = ?", (book["stock"], book["id"]))
+        cursor.execute(
+            "UPDATE books SET stock = ? WHERE isbn = ?", (book["stock"], book["id"])
+        )
         conn.commit()
         conn.close()
 
@@ -82,4 +84,3 @@ class SqliteBookRepository(BookRepository):
             "price": row["price"],
             "stock": row["stock"],
         }
-    

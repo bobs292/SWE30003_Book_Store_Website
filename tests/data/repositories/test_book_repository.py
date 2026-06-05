@@ -111,6 +111,34 @@ class TestSqliteBookRepository:
 
         assert book["cover_url"] == "/static/images/covers/9780140449136.jpg"
 
+    def test_update_uses_isbn_column(self):
+        # update() must use the isbn column, not a non-existent book_id column.
+        # This test would have caught the original bug where the query used
+        # "WHERE book_id = ?" and raised "no such column: book_id" at runtime.
+        with patch("src.data.repositories.book_repository.get_connection") as mock_conn:
+            mock_cursor = MagicMock()
+            mock_conn.return_value.cursor.return_value = mock_cursor
+
+            repo = SqliteBookRepository()
+            repo.update({"id": "9780553418026", "stock": 3})
+
+        sql = mock_cursor.execute.call_args[0][0]
+        assert "isbn" in sql.lower()
+        assert "book_id" not in sql.lower()
+
+    def test_update_passes_stock_and_isbn(self):
+        # The correct stock value and isbn must be bound to the query parameters.
+        with patch("src.data.repositories.book_repository.get_connection") as mock_conn:
+            mock_cursor = MagicMock()
+            mock_conn.return_value.cursor.return_value = mock_cursor
+
+            repo = SqliteBookRepository()
+            repo.update({"id": "9780553418026", "stock": 7})
+
+        params = mock_cursor.execute.call_args[0][1]
+        assert params[0] == 7  # new stock
+        assert params[1] == "9780553418026"  # isbn used as key
+
     def test_cover_url_none_when_cached_file_does_not_exist(self):
         # If the cover has not been cached locally, cover_url should be None
         # so the template falls back to a placeholder image.

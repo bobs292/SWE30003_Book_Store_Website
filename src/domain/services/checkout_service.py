@@ -21,6 +21,8 @@ class CheckoutService:
         self.book_repo = book_repo
         self.payment_gateway = payment_gateway
 
+    STANDARD_SHIPPING_FEE = 9.99
+
     def process_checkout(
         self,
         customer_id: int,
@@ -28,6 +30,7 @@ class CheckoutService:
         shipping_address: str,
         shipping_phone: str,
         payment_details: dict,
+        shipping_fee: float = 9.99,
     ):
         # ensure stock is available and fetch book objects
         books = {}
@@ -39,9 +42,8 @@ class CheckoutService:
                 raise ValueError(f"Insufficient stock for '{book['title']}'")
             books[item["book_id"]] = book
 
-        # Calculate the total (add flat shipping fee $9.99)
         subtotal = sum(item["quantity"] * item["unit_price"] for item in cart_items)
-        total = subtotal + 9.99
+        total = subtotal + shipping_fee
 
         # prrocess payment
         if not self.payment_gateway.charge(total, payment_details):

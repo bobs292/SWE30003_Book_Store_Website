@@ -1,114 +1,264 @@
- <!-- Form that the user adds their adress and number.  -->
-
-
- <!-- Lists items, plus total -->
-
- <!-- Order button, that proceeds to cjheckout -->
-
 {% extends "base.html" %}
 
 {% block content %}
 <div class="page-header">
     <h1>Checkout</h1>
 </div>
+
 <div class="checkout">
-    <!-- left side FORM -->
+    <!-- Left: form -->
     <div class="checkout-form">
         <form method="POST" action="{{ url_for('order.checkout') }}">
 
-        <label>Street address</label>
-        <input type="text" name="address" required>
+            <!-- Delivery method -->
+            <fieldset class="delivery-fieldset">
+                <legend>Delivery Method</legend>
+                <label class="delivery-option">
+                    <input type="radio" name="delivery_method" value="delivery"
+                           {% if form.get('delivery_method', 'delivery') != 'pickup' %}checked{% endif %}>
+                    <span>
+                        <strong>Home Delivery</strong>
+                        <span class="delivery-fee">$9.99</span>
+                    </span>
+                </label>
+                <label class="delivery-option">
+                    <input type="radio" name="delivery_method" value="pickup"
+                           {% if form.get('delivery_method') == 'pickup' %}checked{% endif %}>
+                    <span>
+                        <strong>Store Pickup</strong>
+                        <span class="delivery-fee free">Free</span>
+                    </span>
+                </label>
+            </fieldset>
 
-        <label>City</label>
-        <input type="text" name="city" required>
+            <!-- Address section — hidden for pickup -->
+            <div id="address-section">
+                <p class="required-note">
+                    Fields marked <span style="color:#c0392b">*</span> are required.
+                </p>
 
-        <label>Postcode</label>
-        <input type="text" name="postcode" required>
+                <div class="form-group">
+                    <label for="street">Street Address <span class="req">*</span></label>
+                    <input type="text" id="street" name="street"
+                           placeholder="e.g. 42 Station Street"
+                           value="{{ form.get('street') or (customer.address.street if customer and customer.address else '') }}"
+                           class="{{ 'field-error' if errors.get('street') else '' }}">
+                    {% if errors.get('street') %}
+                        <p class="field-error-msg">{{ errors.get('street') }}</p>
+                    {% endif %}
+                </div>
 
-        <label>Phone</label>
-        <input type="tel" name="phone" required>
+                <div class="form-group">
+                    <label for="suburb">Suburb <span class="req">*</span></label>
+                    <input type="text" id="suburb" name="suburb"
+                           placeholder="e.g. Melbourne"
+                           value="{{ form.get('suburb') or (customer.address.suburb if customer and customer.address else '') }}"
+                           class="{{ 'field-error' if errors.get('suburb') else '' }}">
+                    {% if errors.get('suburb') %}
+                        <p class="field-error-msg">{{ errors.get('suburb') }}</p>
+                    {% endif %}
+                </div>
 
-        <button type="submit" class="btn-order">Place Order</button>
-      </form>
+                <div class="form-group">
+                    <label for="state">State <span class="req">*</span></label>
+                    <input type="text" id="state" name="state"
+                           placeholder="e.g. VIC"
+                           value="{{ form.get('state') or (customer.address.state if customer and customer.address else '') }}"
+                           class="{{ 'field-error' if errors.get('state') else '' }}">
+                    <p class="field-hint">2–3 letters: VIC, NSW, QLD, WA, SA, TAS, ACT, NT</p>
+                    {% if errors.get('state') %}
+                        <p class="field-error-msg">{{ errors.get('state') }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="postcode">Postcode <span class="req">*</span></label>
+                    <input type="text" id="postcode" name="postcode"
+                           placeholder="e.g. 3000"
+                           value="{{ form.get('postcode') or (customer.address.postcode if customer and customer.address else '') }}"
+                           class="{{ 'field-error' if errors.get('postcode') else '' }}">
+                    <p class="field-hint">4 digits</p>
+                    {% if errors.get('postcode') %}
+                        <p class="field-error-msg">{{ errors.get('postcode') }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="phone_number">Phone Number</label>
+                    <input type="text" id="phone_number" name="phone_number"
+                           placeholder="e.g. 0412 345 678"
+                           value="{{ form.get('phone_number') or (customer.phone_number if customer else '') }}"
+                           class="{{ 'field-error' if errors.get('phone_number') else '' }}">
+                    <p class="field-hint">Australian mobile only. Leave blank to skip.</p>
+                    {% if errors.get('phone_number') %}
+                        <p class="field-error-msg">{{ errors.get('phone_number') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <button type="submit" class="btn-order">Place Order</button>
+        </form>
     </div>
-    <!-- right side summary -->
-  <div class="order-summary">
-      <h3>Order Summary</h3>
-      <table>
-        <thead><tr><th>Item</th><th>Price</th></tr></thead>
-        <tbody>
-          {% for item in cart_items %}
-          <tr><td>{{ item.book.title }}</td><td>${{ '%.2f'|format(item.book.price) }}</td></tr>
-          {% endfor %}
-          <tr><td>Shipping (flat rate)</td><td>$9.99</td></tr>
-        </tbody>
-      </table>
-      <div class="total-section">
-        <strong>Total: ${{ '%.2f'|format(subtotal + 9.99) }}</strong>
-      </div>
+
+    <!-- Right: order summary -->
+    <div class="order-summary">
+        <h3>Order Summary</h3>
+        <table>
+            <thead><tr><th colspan="2">Item</th><th>Price</th></tr></thead>
+            <tbody>
+                {% for item in cart_items %}
+                <tr>
+                    <td class="summary-cover-cell">
+                        {% if item.book.cover_url %}
+                            <img src="{{ item.book.cover_url }}"
+                                 alt="{{ item.book.title }}"
+                                 class="summary-cover">
+                        {% else %}
+                            <div class="summary-cover-fallback">
+                                {{ item.book.title[:2] }}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ item.book.title }}
+                        {% if item.quantity > 1 %}
+                            <span class="summary-qty">× {{ item.quantity }}</span>
+                        {% endif %}
+                    </td>
+                    <td>${{ '%.2f'|format(item.book.price * item.quantity) }}</td>
+                </tr>
+                {% endfor %}
+                <tr id="shipping-row">
+                    <td colspan="2">Shipping (flat rate)</td>
+                    <td>$9.99</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="total-section">
+            <strong>Total: <span id="order-total">${{ '%.2f'|format(subtotal + 9.99) }}</span></strong>
+        </div>
     </div>
-  </div>
 </div>
 
 <style>
 .checkout {
-  display: flex;
-  gap: 2rem;
-  margin-top: 2rem;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 2rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
 }
-
-.checkout-form {
-  flex: 2;
-  min-width: 260px;
-}
-
-.order-summary {
-  flex: 1.5;
-  min-width: 260px;
-}
-
+.checkout-form { flex: 2; min-width: 260px; }
+.order-summary { flex: 1.5; min-width: 260px; }
+.required-note { font-size: 13px; color: #888; margin: 0 0 0.75rem; }
+.form-group { margin-bottom: 1rem; }
 .checkout-form label {
-  display: block;
-  margin: 0.75rem 0 0.25rem;
-  font-weight: 500;
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 500;
+    color: #444;
+    font-size: 14px;
 }
+.req { color: #c0392b; margin-left: 2px; }
+.checkout-form input[type="text"] {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+input.field-error { border-color: #c0392b; background: #fff8f8; }
+.field-error-msg { color: #c0392b; font-size: 12px; margin-top: 4px; }
+.field-hint { color: #888; font-size: 12px; margin-top: 4px; }
 
-.checkout-form input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+.delivery-fieldset {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    gap: 1rem;
 }
+.delivery-fieldset legend {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    padding: 0 0.25rem;
+}
+.delivery-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: normal;
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 6px;
+}
+.delivery-option:has(input:checked) {
+    border-color: var(--brand, #1f6f5c);
+    background: rgba(31, 111, 92, 0.06);
+}
+.delivery-fee {
+    font-size: 12px;
+    color: #888;
+    margin-left: 0.25rem;
+}
+.delivery-fee.free { color: var(--brand, #1f6f5c); font-weight: 600; }
 
 .btn-order {
-  margin-top: 1.5rem;
-  padding: 0.5rem 1rem;
-  background: var(--brand, #1f6f5c);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  width: 100%;
+    margin-top: 1.25rem;
+    padding: 0.6rem 1rem;
+    background: var(--brand, #1f6f5c);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 15px;
 }
-
-.order-summary table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
+.btn-order:hover { opacity: 0.9; }
+.order-summary table { width: 100%; border-collapse: collapse; }
 .order-summary td, .order-summary th {
-  padding: 0.5rem;
-  border-bottom: 1px solid #ddd;
-  text-align: left;
+    padding: 0.5rem;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+    font-size: 14px;
+    vertical-align: middle;
 }
-
 .total-section {
-  margin-top: 1rem;
-  text-align: right;
-  border-top: 1px solid #ddd;
-  padding-top: 0.5rem;
+    margin-top: 1rem;
+    text-align: right;
+    border-top: 1px solid #ddd;
+    padding-top: 0.5rem;
 }
 </style>
+
+<script>
+(function () {
+    const subtotal = {{ subtotal }};
+    const shippingFee = 9.99;
+
+    const radios = document.querySelectorAll('input[name="delivery_method"]');
+    const addressSection = document.getElementById('address-section');
+    const shippingRow = document.getElementById('shipping-row');
+    const totalEl = document.getElementById('order-total');
+
+    function applyDeliveryMethod() {
+        const isPickup = document.querySelector(
+            'input[name="delivery_method"]:checked'
+        ).value === 'pickup';
+
+        addressSection.style.display = isPickup ? 'none' : '';
+        shippingRow.style.display = isPickup ? 'none' : '';
+        const total = isPickup ? subtotal : subtotal + shippingFee;
+        totalEl.textContent = '$' + total.toFixed(2);
+    }
+
+    radios.forEach(r => r.addEventListener('change', applyDeliveryMethod));
+    applyDeliveryMethod();
+}());
+</script>
 
 {% endblock %}

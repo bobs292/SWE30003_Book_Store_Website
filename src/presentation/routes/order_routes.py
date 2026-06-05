@@ -1,4 +1,41 @@
+import re
+
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+
+
+def _normalize_phone(phone):
+    """Convert +61 / 61 international format to domestic 04XXXXXXXX."""
+    if not phone:
+        return phone
+    n = phone.replace(" ", "")
+    if n.startswith("+61"):
+        n = "0" + n[3:]
+    elif n.startswith("61") and len(n) == 11:
+        n = "0" + n[2:]
+    return n
+
+
+def _validate_checkout_fields(street, suburb, state, postcode, phone):
+    errors = {}
+    if not street:
+        errors["street"] = "Street address is required."
+    if not suburb:
+        errors["suburb"] = "Suburb is required."
+    if not state:
+        errors["state"] = "State is required."
+    elif not re.fullmatch(r"[A-Za-z]{2,3}", state):
+        errors["state"] = "State must be 2 or 3 letters (e.g. VIC, NSW)."
+    if not postcode:
+        errors["postcode"] = "Postcode is required."
+    elif not re.fullmatch(r"\d{4}", postcode):
+        errors["postcode"] = "Postcode must be exactly 4 digits (e.g. 3000)."
+    if phone:
+        normalized = _normalize_phone(phone)
+        if not re.fullmatch(r"04\d{8}", normalized):
+            errors["phone_number"] = (
+                "Enter a valid Australian mobile number (e.g. 0412 345 678)."
+            )
+    return errors
 
 
 def _coerce_int(value, default=0):
@@ -170,61 +207,99 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
 
     @order.route("/checkout", methods=["GET", "POST"])
     def checkout():
+        customer_id = session.get("customer_id")
+        if not customer_id:
+            flash("Please log in to checkout.", "error")
+            return redirect(url_for("auth.login"))
+
+        customer = customer_repo.find_by_id(customer_id)
+
         if request.method == "POST":
-            # get the form data
-            address = request.form.get("address")
-            city = request.form.get("city")
-            postcode = request.form.get("postcode")
-            phone = request.form.get("phone")
-            shipping_address = f"{address}, {city}, {postcode}"
-            # get cart data
+            form = request.form.to_dict()
+            delivery_method = form.get("delivery_method", "delivery")
+            is_pickup = delivery_method == "pickup"
+
+            street = form.get("street", "").strip()
+            suburb = form.get("suburb", "").strip()
+            state = form.get("state", "").strip()
+            postcode = form.get("postcode", "").strip()
+            phone = form.get("phone_number", "").strip()
+
+            errors = (
+                {}
+                if is_pickup
+                else _validate_checkout_fields(street, suburb, state, postcode, phone)
+            )
+
+            if errors:
+                books = catalogue_service.list_books()
+                cart_data = _get_cart()
+                cart_items, subtotal = _build_cart_items(books, cart_data)
+                return render_template(
+                    "checkout.html",
+                    cart_items=cart_items,
+                    subtotal=subtotal,
+                    customer=customer,
+                    errors=errors,
+                    form=form,
+                )
+
             cart_data = _get_cart()
             if not cart_data:
                 flash("Your cart is empty.", "error")
                 return redirect(url_for("order.cart"))
-            # Retrieve full book details (needed for the service)
+
             books = catalogue_service.list_books()
             cart_items, subtotal = _build_cart_items(books, cart_data)
             if not cart_items:
                 flash("No valid items in cart.", "error")
                 return redirect(url_for("order.cart"))
-            # prepare input for serive
-            service_items = []
-            for item in cart_items:
-                service_items.append(
-                    {
-                        "book_id": item["book"]["id"],
-                        "quantity": item["quantity"],
-                        "unit_price": item["book"]["price"],
-                    }
-                )
-            customer_id = session.get("customer_id")
-            if not customer_id:
-                flash("Please log in to checkout.", "error")
-                return redirect(url_for("auth.login"))
-            # call the service
+
+            service_items = [
+                {
+                    "book_id": item["book"]["id"],
+                    "quantity": item["quantity"],
+                    "unit_price": item["book"]["price"],
+                }
+                for item in cart_items
+            ]
+
+            if is_pickup:
+                shipping_address = "Store Pickup"
+                shipping_phone = None
+                shipping_fee = 0.0
+            else:
+                shipping_address = f"{street}, {suburb} {state} {postcode}"
+                shipping_phone = _normalize_phone(phone) if phone else None
+                shipping_fee = 9.99
+
             try:
                 order, invoice = checkout_service.process_checkout(
                     customer_id=customer_id,
                     cart_items=service_items,
                     shipping_address=shipping_address,
-                    shipping_phone=phone,
+                    shipping_phone=shipping_phone,
                     payment_details={},
+                    shipping_fee=shipping_fee,
                 )
                 _save_cart({})
                 flash(
                     f"Order #{order.order_id} placed! Invoice #{invoice.invoice_id}",
                     "success",
                 )
-                # to display books in confirm screne
                 books = catalogue_service.list_books()
                 books_by_id = {str(book["id"]): book for book in books}
                 for item in order.items:
                     book = books_by_id.get(str(item.book_id))
                     item.book_title = book["title"] if book else f"Book {item.book_id}"
+                    item.book_cover_url = book.get("cover_url") if book else None
 
                 return render_template(
-                    "order_confirmation.html", order=order, invoice=invoice
+                    "order_confirmation.html",
+                    order=order,
+                    invoice=invoice,
+                    customer=customer,
+                    shipping_fee=shipping_fee,
                 )
 
             except ValueError as e:
@@ -233,18 +308,18 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
             except Exception as e:
                 flash(f"Checkout failed: {str(e)}", "error")
                 return redirect(url_for("order.cart"))
-        # GET METHOD
+
+        # GET
         books = catalogue_service.list_books()
         cart_data = _get_cart()
         cart_items, subtotal = _build_cart_items(books, cart_data)
-
-        customer = None
-        customer_id = session.get("customer_id")
-        if customer_id:
-            customer = customer_repo.find_by_id(customer_id)
-
         return render_template(
-            "checkout.html", cart_items=cart_items, subtotal=subtotal, customer=customer
+            "checkout.html",
+            cart_items=cart_items,
+            subtotal=subtotal,
+            customer=customer,
+            errors={},
+            form={},
         )
 
     return order

@@ -141,6 +141,24 @@ def test_total_includes_flat_shipping_fee():
     assert abs(order.total_amount - 29.99) < 0.001
 
 
+def test_pickup_has_zero_shipping_fee():
+    service = _make_service()
+    cart = [{"book_id": 1, "quantity": 1, "unit_price": 20.00}]
+    order, _ = service.process_checkout(
+        1, cart, "Store Pickup", None, {}, shipping_fee=0.0
+    )
+    assert abs(order.total_amount - 20.00) < 0.001
+
+
+def test_custom_shipping_fee_used_in_total():
+    service = _make_service()
+    cart = [{"book_id": 1, "quantity": 1, "unit_price": 10.00}]
+    order, _ = service.process_checkout(
+        1, cart, "1 Main St", "0412345678", {}, shipping_fee=5.00
+    )
+    assert abs(order.total_amount - 15.00) < 0.001
+
+
 def test_total_sums_all_line_items_plus_shipping():
     service = _make_service(books=[_make_book(1), _make_book(2)])
     cart = [

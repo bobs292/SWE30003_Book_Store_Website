@@ -78,31 +78,11 @@
         margin-top: 0.5rem;
     }
     button:hover { background-color: red; }
-    .flash-messages { margin-bottom: 1rem; }
-    .flash {
-        padding: 0.75rem 1rem;
-        margin-bottom: 0.5rem;
-        border-radius: 4px;
-        color: #fff;
-        font-size: 14px;
-    }
-    .flash.error { background: #d32f2f; }
-    .flash.success { background: #2e7d32; }
 </style>
 
 <div class="login-box">
     <h2>Register</h2>
     <p class="required-note">Fields marked <span>*</span> are required.</p>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="flash {{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
 
     <form action="{{ url_for('auth.register') }}" method="POST">
 

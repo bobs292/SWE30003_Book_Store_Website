@@ -1,95 +1,66 @@
 import os
+import ssl
 import time
 import urllib.error
 import urllib.request
 
-# URL pattern for the Open Library Covers API.
-# {isbn} is replaced with the book's ISBN-13. M is medium size.
-# This is only called once per book, at seed time, and the result is cached
-# locally.
+import certifi
+
 _OPEN_LIBRARY_URL = "https://covers.openlibrary.org/b/isbn/{isbn}-M.jpg"
-
-# Minimum file size in bytes to consider a cover valid.
-# Open Library returns a 1x1 pixel blank image (around 43 bytes) when no cover
-# exists. Any file smaller than this threshold is treated as a missing cover
-# and discarded so the template can fall back gracefully to a placeholder.
-# This threshold exists because the API serves a real JPEG for valid ISBNs and
-# a tiny blank for missing ones, and we need to distinguish the two.
 _MIN_COVER_BYTES = 1000
-
-# urllib does not send a User-Agent by default which some servers reject.
-# The User-Agent header identifies this application as a legitimate client
-# rather than an anonymous script. Open Library and archive.org both serve the
-# actual image data when a standard browser-like User-Agent is present, but may
-# return HTTP 403 or block requests that lack one.
-# We use urllib from the Python standard library instead of spawning a
-# subprocess with curl because urllib requires no external dependencies, works
-# identically across Windows, macOS and Linux, and eliminates shell-escaping
-# and injection risks.
 _HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; FavouriteBooks/1.0)"}
 
+# On Windows, Python's urllib does not use the system certificate store.
+# Pointing the SSL context at certifi's CA bundle replicates the behaviour
+# Linux gets from its system store, so archive.org's certificate chain is
+# trusted without disabling verification entirely.
+_SSL_CTX = ssl.create_default_context(cafile=certifi.where())
 
 def cache_covers(books, cache_dir):
     """
     Fetches and saves cover images for a list of books into cache_dir.
     Each cover is saved as {isbn}.jpg. Covers that are already cached are
     skipped, as are books whose Open Library response is blank.
-
     Since isbn is the books table's primary key, callers pass books that
     already have an isbn, so the no-isbn case is only a safety net here
     rather than an expected path.
-
     books     - list of dicts, each with an 'isbn' key
     cache_dir - absolute path to the folder where covers should be saved
     """
     os.makedirs(cache_dir, exist_ok=True)
-
     to_fetch = [
         b
         for b in books
         if b.get("isbn")
         and not os.path.exists(os.path.join(cache_dir, f"{b['isbn']}.jpg"))
     ]
-
     if not to_fetch:
         print("  [covers] All covers already cached.", flush=True)
         return
-
     total = len(to_fetch)
     print(f"  [covers] Fetching {total} new cover(s) from Open Library...", flush=True)
-
     for i, book in enumerate(to_fetch, 1):
         isbn = book["isbn"]
         title = book.get("title", isbn)
         dest = os.path.join(cache_dir, f"{isbn}.jpg")
         print(f"  [covers] [{i}/{total}] {title}", flush=True)
         _fetch_and_save(isbn, dest)
-        # Pause briefly between requests to avoid rate-limiting by Open Library
-        # and archive.org.
         if i < total:
-            time.sleep(0.5)
-
+            time.sleep(1.0)
     print("  [covers] Done.", flush=True)
 
-
 def _fetch_and_save(isbn, dest):
-    # Fetches the cover image for the given ISBN from Open Library and saves
-    # it to dest. Open Library returns a 302 redirect to archive.org.
-    # We build the request with a User-Agent header so both servers respond
-    # with the image rather than rejecting the request.
     url = _OPEN_LIBRARY_URL.format(isbn=isbn)
     try:
         req = urllib.request.Request(url, headers=_HEADERS)
-        with urllib.request.urlopen(req, timeout=10) as response:
+        with urllib.request.urlopen(req, timeout=15, context=_SSL_CTX) as response:
             data = response.read()
-    except (urllib.error.URLError, OSError):
-        # Network error or timeout. Skip this cover silently.
-        # The template will show a placeholder instead.
+    except (urllib.error.URLError, OSError) as e:
+        print(f"    [covers] FAILED {isbn}: {type(e).__name__}: {e}", flush=True)
         return
 
     if len(data) < _MIN_COVER_BYTES:
-        # Open Library returned a blank placeholder image.
-        # Do not cache it so the template falls back gracefully.
+        print(f"    [covers] Blank image returned for {isbn}, skipping.", flush=True)
         return
 
     with open(dest, "wb") as f:

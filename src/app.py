@@ -90,6 +90,19 @@ def create_app():
             except (TypeError, ValueError):
                 continue
         return {"cart_count": total}
+# This allows for the current session to know the current user logged in, Look up the customer and get the users email for the templates
+    @app.context_processor
+    def inject_user_email():
+        customer_id = session.get("customer_id")
+        if not customer_id:
+            return {}
+        try:
+            customer = customer_repo.find_by_id(customer_id)
+            if customer:
+                return {"current_user_email": customer.email}
+        except Exception:
+            pass
+        return {}
 
     return app
 

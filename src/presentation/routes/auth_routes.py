@@ -2,6 +2,7 @@ import json
 import os
 import string
 
+from dotenv import load_dotenv
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 from email_validator import validate_email, EmailNotValidError
 from smartystreets_python_sdk import BasicAuthCredentials, ClientBuilder
@@ -13,8 +14,7 @@ DATA_FILE = os.path.abspath(
 )
 
 # DON'T DO THIS!!!!
-Auth_id = "02a657c9-a194-cb5d-8a4a-69bc63bf2367"
-Auth_token = "GLc5gzDJ5MpDKHwuSPdo"
+
 
 def create_auth_routes(auth_service):
     
@@ -48,6 +48,9 @@ def create_auth_routes(auth_service):
             return "Invalid format (cannot parse)"
  
     def address_check(address):
+        load_dotenv()
+        Auth_id = os.getenv("SMARTYSTREETS_AUTH_ID")
+        Auth_token = os.getenv("SMARTYSTREETS_AUTH_TOKEN")
         credentials = BasicAuthCredentials(Auth_id, Auth_token)
         client = ClientBuilder(credentials).build_international_street_api_client()
         lookup = InternationalLookup()

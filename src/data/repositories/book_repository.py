@@ -30,6 +30,14 @@ class SqliteBookRepository(BookRepository):
         if row is None:
             return None
         return self._row_to_dict(row)
+    
+    #updates changes to the book recorod
+    def update(self, book):
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE books SET stock = ? WHERE book_id = ?", (book["stock"], book["id"]))
+        conn.commit()
+        conn.close()
 
     def _row_to_dict(self, row):
         # Converts a database row into a plain dictionary.
@@ -74,3 +82,4 @@ class SqliteBookRepository(BookRepository):
             "price": row["price"],
             "stock": row["stock"],
         }
+    

@@ -7,6 +7,7 @@ __pycache__/
 
 # Environment
 venv/
+.env.local
 
 # Database (this is initialised on start)
 src/data/store.db

@@ -14,22 +14,13 @@
   <p>Review your items, update quantities, or remove books.</p>
 </div>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-  {% for category, message in messages %}
-  <div class="flash {{ category }}">
-    {{ message }}
-  </div>
-  {% endfor %}
-  {% endif %}
-{% endwith %}
-
 {% if cart_items %}
 <div class="cart-summary">
   <table class="cart-table">
     <thead>
       <tr>
         <th class="cell-center">#</th>
+        <th></th>
         <th>Title</th>
         <th class="cell-center">Price</th>
         <th class="cell-center">Quantity</th>
@@ -41,6 +32,17 @@
       {% for item in cart_items %}
       <tr>
         <td class="cell-center">{{ loop.index }}</td>
+        <td class="cart-cover-cell">
+          {% if item.book.cover_url %}
+            <img src="{{ item.book.cover_url }}"
+                 alt="{{ item.book.title }}"
+                 class="cart-cover">
+          {% else %}
+            <div class="cart-cover-fallback">
+              {{ item.book.title[:2] }}
+            </div>
+          {% endif %}
+        </td>
         <td>
           <strong>{{ item.book.title }}</strong><br>
           <span class="meta">{{ item.book.author }}</span>

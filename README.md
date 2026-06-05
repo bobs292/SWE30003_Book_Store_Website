@@ -26,6 +26,21 @@ pip install -e .
 
 ---
 
+## Secrets
+
+The app uses the [SmartyStreets International Street API](https://www.smarty.com/docs/apis/international-street-api) to verify Australian addresses at registration. Credentials are required to run the app and the address validation integration tests.
+
+Create a `.env.local` file in the project root (it is gitignored):
+
+```bash
+SMARTY_AUTH_ID=your-auth-id
+SMARTY_AUTH_TOKEN=your-auth-token
+```
+
+Get credentials from [smarty.com](https://www.smarty.com). The `.env` file already committed contains only non-secret config (`FLASK_APP`, `FLASK_DEBUG`) and does not need to be modified.
+
+---
+
 ## Running the Web Application
 
 ```bash
@@ -77,6 +92,12 @@ This runs:
 - Code style checks via flake8 (formatting, linting, and pytest-specific style)
 - Architectural import contract verification
 
+Address validation integration tests hit the real SmartyStreets API and are skipped automatically when credentials are absent. To run them, load `.env.local` before invoking pytest:
+
+```bash
+export $(grep -v '^#' .env.local | xargs) && hatch run pytest
+```
+
 To run tests without code style checks:
 
 ```bash
@@ -87,10 +108,10 @@ hatch run pytest -p no:flake8
 
 ## Setting Up for Development
 
-The `pip install -e .` command installs the project.It also makes all imports resolve from `src/` so
+The `pip install -e .` command installs the project. It also makes all imports resolve from `src/` so
 you never need to modify your Python path manually. All development
 dependencies including pytest, import-linter, pre-commit, pytest-flake8,
-flake8, black, and isort are handled by hatch. 
+flake8, black, and isort are handled by hatch.
 
 Next, install the pre-commit hooks.
 

@@ -133,7 +133,7 @@ def test_init_db_is_idempotent():
     )
     count = cursor.fetchone()[0]
     conn.close()
-    assert count == 2
+    assert count == 5
 
 
 def test_customers_table_has_expected_columns():
@@ -349,6 +349,26 @@ def test_book_valid_insert_succeeds(isolated_db):
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM books")
     assert cursor.fetchone()[0] == 1
+    conn.close()
+
+
+def test_phone_number_must_be_unique(isolated_db):
+    # The UNIQUE constraint on phone_number should reject a second customer
+    # with the same non-null phone number.
+    init_db()
+    conn = get_connection()
+    conn.execute(
+        "INSERT INTO customers (first_name, last_name, email, phone_number, password) "
+        "VALUES (?, ?, ?, ?, ?)",
+        ("John", "Smith", "a@b.co", "0412345678", "a" * 60),
+    )
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute(
+            "INSERT INTO customers (first_name, last_name, email, "
+            "phone_number, password) "
+            "VALUES (?, ?, ?, ?, ?)",
+            ("Jane", "Doe", "c@d.co", "0412345678", "b" * 60),
+        )
     conn.close()
 
 
@@ -600,3 +620,232 @@ def test_seed_books_updates_changed_price_on_reseed(isolated_db):
     # Exactly one row, and its price reflects the edited seed value.
     assert len(rows) == 1
     assert rows[0]["price"] == 9.99
+
+
+# ============================================================================
+# _seed_users
+# Tests that the user seed loader reads data.json and populates the customers
+# table on first run, upserts existing rows on later runs (matched by email)
+# so profile edits take effect, skips entries with no email or no password,
+# does not overwrite an existing password on re-seed, and handles a duplicate
+# phone_number gracefully by skipping that entry rather than crashing startup.
+
+# Any 60-character string satisfies the DB CHECK(length(password) >= 60).
+# Real password hashes are longer, but the exact format is irrelevant here
+# because we are testing seeding logic, not password hashing.
+_SEED_HASH = "a" * 60
+
+
+def _make_seed_user(**overrides):
+    defaults = dict(
+        first_name="Test",
+        last_name="User",
+        email="test@example.com",
+        password=_SEED_HASH,
+        phone_number="0412345678",
+        street="1 Test St",
+        suburb="Melbourne",
+        state="VIC",
+        postcode="3000",
+    )
+    defaults.update(overrides)
+    return defaults
+
+
+def _write_seed(path, users):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"users": users}, f)
+
+
+def test_seed_users_populates_table_on_first_run(isolated_db):
+    # Two valid seed users should both appear in the customers table after init_db.
+    _write_seed(
+        db_module.SEEDS_PATH,
+        [
+            _make_seed_user(email="a@example.com", phone_number="0411111111"),
+            _make_seed_user(email="b@example.com", phone_number="0422222222"),
+        ],
+    )
+    init_db()
+
+    conn = get_connection()
+    count = conn.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+    conn.close()
+    assert count == 2
+
+
+def test_seed_users_does_not_duplicate_on_second_run(isolated_db):
+    # Calling init_db a second time when the customers table already has a row
+    # should leave the count unchanged — the upsert on email updates in place.
+    _write_seed(db_module.SEEDS_PATH, [_make_seed_user()])
+    init_db()
+    init_db()
+
+    conn = get_connection()
+    count = conn.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+    conn.close()
+    assert count == 1
+
+
+def test_seed_users_handles_missing_seed_file(isolated_db):
+    # When data.json does not exist, init_db must complete without error and
+    # leave the customers table empty.
+    init_db()
+
+    conn = get_connection()
+    count = conn.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+    conn.close()
+    assert count == 0
+
+
+def test_seed_users_stores_correct_values(isolated_db):
+    # Every field in the seed entry must appear verbatim in the database row.
+    # This catches column transpositions in the INSERT statement.
+    _write_seed(
+        db_module.SEEDS_PATH,
+        [
+            _make_seed_user(
+                first_name="Jane",
+                last_name="Smith",
+                email="jane@example.com",
+                phone_number="0498765432",
+                street="42 Test Road",
+                suburb="Sydney",
+                state="NSW",
+                postcode="2000",
+            )
+        ],
+    )
+    init_db()
+
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT * FROM customers WHERE email = ?", ("jane@example.com",)
+    ).fetchone()
+    conn.close()
+
+    assert row["first_name"] == "Jane"
+    assert row["last_name"] == "Smith"
+    assert row["email"] == "jane@example.com"
+    assert row["phone_number"] == "0498765432"
+    assert row["street"] == "42 Test Road"
+    assert row["suburb"] == "Sydney"
+    assert row["state"] == "NSW"
+    assert row["postcode"] == "2000"
+
+
+def test_seed_users_skips_entry_without_email(isolated_db):
+    # A user with no email has no unique key and must be skipped silently.
+    # The customers table should remain empty.
+    user = _make_seed_user()
+    del user["email"]
+    _write_seed(db_module.SEEDS_PATH, [user])
+    init_db()
+
+    conn = get_connection()
+    count = conn.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+    conn.close()
+    assert count == 0
+
+
+def test_seed_users_skips_entry_without_password(isolated_db):
+    # A user with no password hash would produce an account that can never be
+    # logged into. Such entries are skipped rather than inserted.
+    user = _make_seed_user()
+    del user["password"]
+    _write_seed(db_module.SEEDS_PATH, [user])
+    init_db()
+
+    conn = get_connection()
+    count = conn.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+    conn.close()
+    assert count == 0
+
+
+def test_seed_users_updates_profile_on_reseed(isolated_db):
+    # When the seed file changes a profile field for an existing email,
+    # re-seeding must update the stored row. This mirrors the book upsert
+    # behaviour so seed file edits always take effect on the next run.
+    _write_seed(db_module.SEEDS_PATH, [_make_seed_user(first_name="Jane")])
+    init_db()
+
+    _write_seed(db_module.SEEDS_PATH, [_make_seed_user(first_name="Janet")])
+    init_db()
+
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT first_name FROM customers WHERE email = ?", ("test@example.com",)
+    ).fetchone()
+    conn.close()
+    assert row["first_name"] == "Janet"
+
+
+def test_seed_users_does_not_update_password_on_reseed(isolated_db):
+    # Password is intentionally excluded from the ON CONFLICT UPDATE so a user
+    # who registered with a seed email and later changed their password is not
+    # silently overwritten when the server restarts.
+    original_hash = "a" * 60
+    new_hash = "b" * 60
+
+    _write_seed(db_module.SEEDS_PATH, [_make_seed_user(password=original_hash)])
+    init_db()
+
+    _write_seed(db_module.SEEDS_PATH, [_make_seed_user(password=new_hash)])
+    init_db()
+
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT password FROM customers WHERE email = ?", ("test@example.com",)
+    ).fetchone()
+    conn.close()
+    assert row["password"] == original_hash
+
+
+def test_seed_users_skips_duplicate_phone_number(isolated_db):
+    # Two seed users sharing a phone_number violate the UNIQUE constraint.
+    # The second entry must be skipped (with a printed warning) rather than
+    # crashing the whole startup, and the first entry must remain intact.
+    _write_seed(
+        db_module.SEEDS_PATH,
+        [
+            _make_seed_user(email="first@example.com", phone_number="0411111111"),
+            _make_seed_user(email="second@example.com", phone_number="0411111111"),
+        ],
+    )
+    init_db()
+
+    conn = get_connection()
+    count = conn.execute("SELECT COUNT(*) FROM customers").fetchone()[0]
+    first = conn.execute(
+        "SELECT email FROM customers WHERE email = ?", ("first@example.com",)
+    ).fetchone()
+    conn.close()
+
+    assert count == 1
+    assert first is not None
+
+
+def test_seed_users_null_address_when_fields_absent(isolated_db):
+    # A seed user with no address keys must produce NULL for all four address
+    # columns, not an empty string or a partial address that would violate the
+    # all-or-nothing CHECK constraint.
+    user = {
+        "first_name": "NoAddr",
+        "last_name": "User",
+        "email": "noaddr@example.com",
+        "password": _SEED_HASH,
+    }
+    _write_seed(db_module.SEEDS_PATH, [user])
+    init_db()
+
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT street, suburb, state, postcode FROM customers WHERE email = ?",
+        ("noaddr@example.com",),
+    ).fetchone()
+    conn.close()
+
+    assert row["street"] is None
+    assert row["suburb"] is None
+    assert row["state"] is None
+    assert row["postcode"] is None

@@ -2,7 +2,7 @@ import json
 import os
 import sqlite3
 
-from src.data.cover_cache import cache_covers
+from src.data.seeds.cover_cache import cache_covers
 
 # Resolves the path to store.db relative to this file.
 # All repositories import get_connection() from here rather
@@ -66,7 +66,9 @@ def init_db(cover_cache_dir=None):
                                    AND phone_number GLOB
                                    '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]*'
                                    AND phone_number NOT GLOB
-                                   '*[^0-9]*')),
+                                   '*[^0-9]*'))
+             UNIQUE,  -- one phone number per account
+
             password     TEXT NOT NULL
                          CHECK(length(password) >= 60),
             street       TEXT
@@ -147,7 +149,7 @@ def init_db(cover_cache_dir=None):
         )
     """
     )
-    #stores all the orders
+    # stores all the orders
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS orders (
@@ -161,7 +163,7 @@ def init_db(cover_cache_dir=None):
             )
         """
     )
-    #stores all the order items, that will be used to complete an order
+    # stores all the order items, that will be used to complete an order
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS order_items (
@@ -174,8 +176,8 @@ def init_db(cover_cache_dir=None):
             FOREIGN KEY (book_id) REFERENCES books(book_id)
             )
         """
-        )
-    #Store all invoices
+    )
+    # Store all invoices
     cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS invoices (
@@ -186,9 +188,10 @@ def init_db(cover_cache_dir=None):
                 FOREIGN KEY (order_id) REFERENCES orders(order_id)
             )
         """
-        )
+    )
     conn.commit()
     _seed_books(conn, cover_cache_dir)
+    _seed_users(conn)
     conn.close()
 
 
@@ -255,3 +258,71 @@ def _seed_books(conn, cover_cache_dir=None):
     # covers trigger a network fetch.
     if cover_cache_dir and seeded_books:
         cache_covers(seeded_books, cover_cache_dir)
+
+
+def _seed_users(conn):
+    if not os.path.exists(SEEDS_PATH):
+        return
+
+    with open(SEEDS_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    users = data.get("users", [])
+    if not users:
+        return
+
+    cursor = conn.cursor()
+
+    # email is the unique key for customers, so seeding is an upsert keyed on
+    # it. ON CONFLICT(email) DO UPDATE refreshes profile fields in place from
+    # the seed file so edits take effect on the next run. Password is excluded
+    # from the update so that a real user who registered with a seed email and
+    # later changed their password is not silently overwritten.
+    # A user with no email cannot be keyed and is skipped entirely.
+    # A user with no password hash would produce an unusable account and is
+    # also skipped. Phone number has its own UNIQUE constraint; if two seed
+    # entries carry the same number the second is skipped with a warning rather
+    # than crashing the whole startup.
+    for user in users:
+        email = user.get("email")
+        password = user.get("password")
+        if not email:
+            # No email means no unique key — skip silently.
+            continue
+        if not password:
+            # No password hash means the account would be unusable — skip silently.
+            continue
+        try:
+            cursor.execute(
+                """
+                INSERT INTO customers
+                    (first_name, last_name, email, phone_number, password,
+                     street, suburb, state, postcode)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(email) DO UPDATE SET
+                    first_name   = excluded.first_name,
+                    last_name    = excluded.last_name,
+                    phone_number = excluded.phone_number,
+                    street       = excluded.street,
+                    suburb       = excluded.suburb,
+                    state        = excluded.state,
+                    postcode     = excluded.postcode
+                """,
+                (
+                    user.get("first_name", ""),
+                    user.get("last_name", ""),
+                    email,
+                    user.get("phone_number") or None,
+                    password,
+                    user.get("street") or None,
+                    user.get("suburb") or None,
+                    user.get("state") or None,
+                    user.get("postcode") or None,
+                ),
+            )
+        except sqlite3.IntegrityError as e:
+            # Most likely a duplicate phone_number. Skip this entry rather
+            # than aborting the whole seed run.
+            print(f"[seed] skipped user {email!r}: {e}")
+
+    conn.commit()

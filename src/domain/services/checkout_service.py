@@ -1,10 +1,12 @@
 from datetime import datetime
-from src.domain.models.order import Order, OrderItem
+
 from src.domain.models.invoice import Invoice
-from src.domain.repositories.order_repository import OrderRepository
-from src.domain.repositories.invoice_repository import InvoiceRepository
+from src.domain.models.order import Order, OrderItem
 from src.domain.repositories.book_repository import BookRepository
+from src.domain.repositories.invoice_repository import InvoiceRepository
+from src.domain.repositories.order_repository import OrderRepository
 from src.domain.repositories.payment_gateway import PaymentGateway
+
 
 class CheckoutService:
     def __init__(
@@ -19,6 +21,8 @@ class CheckoutService:
         self.book_repo = book_repo
         self.payment_gateway = payment_gateway
 
+    STANDARD_SHIPPING_FEE = 9.99
+
     def process_checkout(
         self,
         customer_id: int,
@@ -26,6 +30,7 @@ class CheckoutService:
         shipping_address: str,
         shipping_phone: str,
         payment_details: dict,
+        shipping_fee: float = 9.99,
     ):
         # ensure stock is available and fetch book objects
         books = {}
@@ -34,12 +39,11 @@ class CheckoutService:
             if not book:
                 raise ValueError(f"Book {item['book_id']} not found")
             if book["stock"] < item["quantity"]:
-                raise ValueError(f"Insufficient stock for '{book.title}'")
+                raise ValueError(f"Insufficient stock for '{book['title']}'")
             books[item["book_id"]] = book
 
-        # Calculate the total (add flat shipping fee $9.99)
         subtotal = sum(item["quantity"] * item["unit_price"] for item in cart_items)
-        total = subtotal + 9.99
+        total = subtotal + shipping_fee
 
         # prrocess payment
         if not self.payment_gateway.charge(total, payment_details):

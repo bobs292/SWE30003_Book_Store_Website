@@ -445,3 +445,28 @@ def test_cart_page_drops_book_removed_from_catalogue(client):
     with client.session_transaction() as sess:
         cart = sess.get("cart", {})
     assert "99" not in cart
+
+
+# ============================================================================
+# checkout
+# Tests for /checkout route.
+# When unauthenticated, a user trying to access checkout should be
+# redirected to login with a flag that indicates they came from checkout.
+# This flag should then cause the login route to redirect back to checkout
+# instead of to the homepage.
+
+
+def test_checkout_get_unauthenticated_redirects_to_login(client):
+    # An unauthenticated user accessing /checkout should be redirected to
+    # the login page.
+    response = client.get("/checkout")
+    assert response.status_code == 302
+    assert "/login" in response.headers["Location"]
+
+
+def test_checkout_get_unauthenticated_sets_checkout_flag_in_session(client):
+    # When redirecting to login, the route should set a flag in the session
+    # so the login route knows this came from a checkout attempt.
+    client.get("/checkout")
+    with client.session_transaction() as sess:
+        assert sess.get("checkout_login_message") is True

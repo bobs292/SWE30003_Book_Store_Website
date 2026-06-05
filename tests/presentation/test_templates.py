@@ -88,7 +88,7 @@ def app(stub_repo):
 
     @flask_app.route("/")
     def homepage():
-        return render_template("home.html")
+        return render_template("home.html", collections={})
 
     auth_bp = Blueprint("auth", __name__)
 
@@ -98,7 +98,13 @@ def app(stub_repo):
 
     @auth_bp.route("/login")
     def login():
-        return render_template("login.html")
+        return render_template(
+            "login.html",
+            errors={},
+            form={},
+            checkout_login=False,
+            registration_success=False,
+        )
 
     @auth_bp.route("/logout")
     def logout():
@@ -111,7 +117,19 @@ def app(stub_repo):
 
     @catalogue_bp.route("/catalogue")
     def catalogue_page():
-        return render_template("catalogue.html", books=BOOKS)
+        return render_template(
+            "catalogue.html",
+            books=BOOKS,
+            genres=[],
+            selected_genre="",
+            sort_by="title",
+            search_query="",
+            cart={},
+        )
+
+    @catalogue_bp.route("/book/<isbn>")
+    def book_detail(isbn):
+        return ""
 
     flask_app.register_blueprint(catalogue_bp)
 

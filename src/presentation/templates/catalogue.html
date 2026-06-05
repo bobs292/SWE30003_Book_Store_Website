@@ -11,23 +11,70 @@
     <p>Browse titles and add them to your cart.</p>
 </div>
 
+<div class="search-box">
+    <form method="get" action="{{ url_for('catalogue.catalogue_page') }}">
+        <input type="text"
+               name="search"
+               class="search-input"
+               placeholder="Start typing to search by keyword, title, author or ISBN"
+               value="{{ search_query }}">
+        {% if selected_genre %}
+            <input type="hidden" name="genre" value="{{ selected_genre }}">
+        {% endif %}
+        {% if sort_by and sort_by != 'title' %}
+            <input type="hidden" name="sort" value="{{ sort_by }}">
+        {% endif %}
+    </form>
+</div>
+
+<div class="catalogue-controls">
+    <div class="genre-filter">
+        <a href="{{ url_for('catalogue.catalogue_page') }}"
+           class="genre-link {% if not selected_genre %}active{% endif %}">
+            All Books
+        </a>
+        {% for genre in genres %}
+        <a href="{{ url_for('catalogue.catalogue_page', genre=genre, sort=sort_by) }}"
+           class="genre-link {% if selected_genre == genre %}active{% endif %}">
+            {{ genre }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="sort-options">
+        <label for="sort-select">Sort by:</label>
+        <select id="sort-select" name="sort" onchange="updateSort(this.value)">
+            <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Title (A-Z)</option>
+            <option value="author" {% if sort_by == 'author' %}selected{% endif %}>Author (A-Z)</option>
+            <option value="price-low" {% if sort_by == 'price-low' %}selected{% endif %}>Price (Low to High)</option>
+            <option value="price-high" {% if sort_by == 'price-high' %}selected{% endif %}>Price (High to Low)</option>
+        </select>
+    </div>
+</div>
+
 {% if books %}
 <div class="book-grid">
     {% for book in books %}
     <div class="book-card">
         <div class="book-card-body">
-            <div class="book-cover">
-                {% if book.cover_url %}
-                <img src="{{ book.cover_url }}" alt="{{ book.title }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                {% endif %}
-                <div class="cover-fallback"{% if book.cover_url %} style="display:none;"{% endif %}>
-                    <span class="cover-title">{{ book.title }}</span>
-                    <span class="cover-author">{{ book.author }}</span>
+            <a href="{{ url_for('catalogue.book_detail', isbn=book.id) }}"
+               class="book-cover-link">
+                <div class="book-cover">
+                    {% if book.cover_url %}
+                    <img src="{{ book.cover_url }}" alt="{{ book.title }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    {% endif %}
+                    <div class="cover-fallback"{% if book.cover_url %} style="display:none;"{% endif %}>
+                        <span class="cover-title">{{ book.title }}</span>
+                        <span class="cover-author">{{ book.author }}</span>
+                    </div>
                 </div>
-            </div>
+            </a>
             <div class="book-details">
-                <span class="genre-tag">{{ book.genre }}</span>
-                <h3>{{ book.title }}</h3>
+                <a href="{{ url_for('catalogue.catalogue_page', genre=book.genre) }}" class="genre-tag genre-tag-link">{{ book.genre }}</a>
+                <h3>
+                    <a href="{{ url_for('catalogue.book_detail', isbn=book.id) }}"
+                       class="book-title-link">{{ book.title }}</a>
+                </h3>
                 <p class="meta">By {{ book.author }}</p>
                 <p class="book-description">{{ book.description }}</p>
             </div>
@@ -38,19 +85,25 @@
                 <span class="stock">Stock: {{ book.stock }}</span>
             </div>
 
+            {% set cart_qty = cart.get(book.id|string, 0) %}
             {% if book.stock > 0 %}
-            <form class="inline-form" method="post" action="{{ url_for('order.cart_add') }}">
-                <input type="hidden" name="book_id" value="{{ book.id }}">
-                <div class="qty-control">
-                    <span class="qty-label">Qty</span>
-                    <div class="qty-stepper">
-                        <button type="button" class="qty-btn" data-action="decrease" aria-label="Decrease quantity">-</button>
-                        <input type="number" name="quantity" min="0" max="{{ book.stock }}" value="" placeholder="0">
-                        <button type="button" class="qty-btn" data-action="increase" aria-label="Increase quantity">+</button>
+            <div class="cart-form-group">
+                <form class="inline-form" method="post" action="{{ url_for('order.cart_add') }}">
+                    <input type="hidden" name="book_id" value="{{ book.id }}">
+                    <div class="qty-control">
+                        <span class="qty-label">Qty</span>
+                        <div class="qty-stepper">
+                            <button type="button" class="qty-btn" data-action="decrease" aria-label="Decrease quantity">-</button>
+                            <input type="number" name="quantity" min="0" max="{{ book.stock }}" value="" placeholder="0">
+                            <button type="button" class="qty-btn" data-action="increase" aria-label="Increase quantity">+</button>
+                        </div>
                     </div>
-                </div>
-                <button type="submit">Add to cart</button>
-            </form>
+                    <button type="submit">Add to cart</button>
+                </form>
+                {% if cart_qty > 0 %}
+                <span class="in-cart-label">In cart: {{ cart_qty }}</span>
+                {% endif %}
+            </div>
             {% else %}
             <p class="out-of-stock">Out of stock</p>
             {% endif %}
@@ -62,7 +115,128 @@
 <p>No books are available right now.</p>
 {% endif %}
 
+<style>
+.search-box {
+    margin-bottom: 2rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--line);
+    border-radius: 0;
+    font-size: 1rem;
+    font-family: "Lora", serif;
+    color: var(--ink);
+}
+
+.search-input::placeholder {
+    color: #999;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--brand);
+}
+
+.catalogue-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.genre-filter {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.genre-link {
+    padding: 0.5rem 1rem;
+    background: #fff;
+    border: 2px solid var(--line);
+    border-radius: 0;
+    text-decoration: none;
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.genre-link:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+}
+
+.genre-link.active {
+    background: var(--brand);
+    color: #fff;
+    border-color: var(--brand);
+}
+
+.sort-options {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sort-options label {
+    font-weight: 500;
+    margin: 0;
+}
+
+.sort-options select {
+    padding: 0.5rem 0.75rem;
+    border: 2px solid var(--line);
+    border-radius: 0;
+    background: #fff;
+    color: var(--ink);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.sort-options select:hover {
+    border-color: var(--brand);
+}
+
+.cart-form-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.in-cart-label {
+    font-size: 0.9rem;
+    color: var(--brand);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .catalogue-controls {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .genre-filter {
+        width: 100%;
+    }
+}
+</style>
+
 <script>
+    function updateSort(sortValue) {
+        const params = new URLSearchParams();
+        const genre = new URLSearchParams(window.location.search).get('genre');
+        if (genre) {
+            params.set('genre', genre);
+        }
+        params.set('sort', sortValue);
+        window.location.href = '{{ url_for("catalogue.catalogue_page") }}?' + params.toString();
+    }
+
     document.addEventListener('click', (event) => {
         const button = event.target.closest('.qty-btn');
         if (!button) {

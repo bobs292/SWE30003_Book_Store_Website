@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="book-detail">
+
+    <div class="book-detail-cover">
+        {% if book.cover_url %}
+            <img src="{{ book.cover_url }}" alt="{{ book.title }}"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        {% endif %}
+        <div class="book-detail-cover-fallback"
+             {% if book.cover_url %}style="display:none;"{% endif %}>
+            <span>{{ book.title }}</span>
+            <span>{{ book.author }}</span>
+        </div>
+    </div>
+
+    <div class="book-detail-info">
+        <a href="{{ url_for('catalogue.catalogue_page', genre=book.genre) }}" class="genre-tag genre-tag-link">{{ book.genre }}</a>
+        <h1 class="book-detail-title">{{ book.title }}</h1>
+        <p class="book-detail-author">By {{ book.author }}</p>
+        <p class="book-detail-description">{{ book.description }}</p>
+
+        <div class="book-detail-footer">
+            <div class="price-stock">
+                <span class="price">${{ '%.2f'|format(book.price) }}</span>
+                <span class="stock">{{ book.stock }} in stock</span>
+            </div>
+
+            {% set cart_qty = cart.get(book.id|string, 0) %}
+            {% if book.stock > 0 %}
+            <div class="cart-form-group">
+                <form class="inline-form" method="post"
+                      action="{{ url_for('order.cart_add') }}">
+                    <input type="hidden" name="book_id" value="{{ book.id }}">
+                    <div class="qty-control">
+                        <span class="qty-label">Qty</span>
+                        <div class="qty-stepper">
+                            <button type="button" class="qty-btn"
+                                    data-action="decrease"
+                                    aria-label="Decrease quantity">-</button>
+                            <input type="number" name="quantity"
+                                   min="0" max="{{ book.stock }}"
+                                   value="" placeholder="0">
+                            <button type="button" class="qty-btn"
+                                    data-action="increase"
+                                    aria-label="Increase quantity">+</button>
+                        </div>
+                    </div>
+                    <button type="submit">Add to cart</button>
+                </form>
+                {% if cart_qty > 0 %}
+                <span class="in-cart-label">In cart: {{ cart_qty }}</span>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="out-of-stock">Out of stock</p>
+            {% endif %}
+        </div>
+
+        <a href="{{ url_for('catalogue.catalogue_page') }}"
+           class="back-link">← Back to Catalogue</a>
+    </div>
+</div>
+
+<style>
+.book-detail {
+    display: flex;
+    gap: 2.5rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+
+.book-detail-cover {
+    flex: 0 0 220px;
+    width: 220px;
+}
+
+.book-detail-cover img {
+    width: 100%;
+    border-radius: 0;
+    border: 2px solid var(--line);
+    display: block;
+}
+
+.book-detail-cover-fallback {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background: var(--brand, #1f6f5c);
+    border-radius: 0;
+    border: 2px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    box-sizing: border-box;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+
+.book-detail-info {
+    flex: 1;
+    min-width: 260px;
+}
+
+.book-detail-title {
+    font-size: 1.8rem;
+    margin: 0.5rem 0 0.25rem;
+    line-height: 1.2;
+}
+
+.book-detail-author {
+    color: #666;
+    font-size: 1rem;
+    margin: 0 0 1.25rem;
+}
+
+.book-detail-description {
+    line-height: 1.7;
+    color: #444;
+    margin-bottom: 1.5rem;
+    max-width: 60ch;
+}
+
+.book-detail-footer {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.back-link {
+    font-size: 14px;
+    color: #666;
+    text-decoration: none;
+}
+
+.back-link:hover { text-decoration: underline; }
+
+.cart-form-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.in-cart-label {
+    font-size: 0.9rem;
+    color: var(--brand);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+    .book-detail { flex-direction: column; }
+    .book-detail-cover { flex: unset; width: 160px; }
+}
+</style>
+
+<script>
+document.addEventListener('click', (event) => {
+    const button = event.target.closest('.qty-btn');
+    if (!button) return;
+    const stepper = button.closest('.qty-stepper');
+    const input = stepper ? stepper.querySelector('input[type="number"]') : null;
+    if (!input) return;
+    const min = parseInt(input.min || '0', 10);
+    const max = parseInt(input.max || '999', 10);
+    const current = parseInt(input.value, 10);
+    const safeCurrent = Number.isNaN(current) ? 0 : current;
+    const delta = button.dataset.action === 'increase' ? 1 : -1;
+    const next = safeCurrent + delta;
+    const clamped = Math.min(max, Math.max(min, next));
+    input.value = clamped <= 0 ? '' : clamped;
+});
+</script>
+{% endblock %}

@@ -1,15 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Work+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700&family=Gabriela:wght@400&display=swap');
 
 :root {
-	--bg: #f6f1e5;
-	--bg-accent: #fdf8ee;
-	--ink: #2a2a26;
-	--muted: #6f6a5f;
-	--line: #ded6c6;
-	--brand: #1f6f5c;
-	--brand-dark: #155144;
-	--danger: #9c2f2f;
-	--shadow: 0 16px 40px rgba(41, 33, 22, 0.12);
+	--bg: #fff5f0;
+	--bg-accent: #ffffff;
+	--ink: #1a1a1a;
+	--muted: #666666;
+	--line: #ffd4bf;
+	--brand: #ff6b35;
+	--brand-dark: #d45a2a;
+	--accent: #ff8c42;
+	--accent-dark: #e67e22;
+	--danger: #ff2e63;
 }
 
 * {
@@ -18,9 +19,9 @@
 
 body {
 	margin: 0;
-	font-family: "Work Sans", sans-serif;
+	font-family: "Lora", serif;
 	color: var(--ink);
-	background: radial-gradient(circle at top left, #fff7e3 0%, var(--bg) 45%, #efe4d0 100%);
+	background: var(--bg);
 	min-height: 100vh;
 	display: flex;
 	flex-direction: column;
@@ -32,7 +33,7 @@ nav {
 	gap: 16px;
 	padding: 18px 24px;
 	background: var(--bg-accent);
-	border-bottom: 1px solid var(--line);
+	border-bottom: 2px solid var(--brand);
 	position: sticky;
 	top: 0;
 	z-index: 10;
@@ -51,23 +52,86 @@ nav {
 	margin-left: auto;
 }
 
+.auth-buttons {
+	display: inline-flex;
+	border: 2px solid var(--brand);
+	border-radius: 0;
+	overflow: hidden;
+	background: white;
+}
+
+.auth-btn {
+	text-decoration: none;
+	color: var(--brand);
+	font-weight: 600;
+	padding: 8px 14px;
+	display: block;
+}
+
+.auth-btn-left {
+	border-right: 2px solid var(--brand);
+}
+
+.auth-btn:hover {
+	background: var(--brand);
+	color: white;
+}
+
+.auth-btn.active {
+	background: var(--brand);
+	color: white;
+}
+
+.auth-btn-right.active {
+	border-right: none;
+}
+
+.auth-btn-left.active {
+	border-right: none;
+}
+
 nav a {
 	text-decoration: none;
 	color: var(--ink);
 	font-weight: 600;
 	padding: 8px 12px;
-	border-radius: 999px;
-	transition: background 0.2s ease, color 0.2s ease;
+	border-radius: 0;
+	border-bottom: 2px solid transparent;
 }
 
 nav a:hover {
+	border-bottom-color: var(--brand);
+	color: var(--brand);
+}
+
+nav a.active {
+	border-bottom-color: var(--brand);
+	color: var(--brand);
+	font-weight: 700;
+}
+
+.nav-user-section {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.logout-link {
+	text-decoration: none;
+	color: var(--ink);
+	font-weight: 600;
+	padding: 8px 12px;
+	border-radius: 0;
+	white-space: nowrap;
+}
+
+.logout-link:hover {
 	background: rgba(31, 111, 92, 0.12);
 	color: var(--brand-dark);
 }
 
-nav a.active {
-	background: var(--brand);
-	color: #fff;
+.nav-user {
+	line-height: 1.3;
 }
 
 .cart-link {
@@ -93,12 +157,13 @@ nav a.active {
 	color: #fff;
 	font-size: 0.75rem;
 	padding: 2px 6px;
-	border-radius: 999px;
+	border-radius: 0;
 	min-width: 20px;
 	text-align: center;
 }
 
 .container {
+	position: relative;
 	max-width: 1100px;
 	margin: 0 auto;
 	padding: 32px 24px 64px;
@@ -125,7 +190,7 @@ nav a.active {
 }
 
 .page-header h1 {
-	font-family: "DM Serif Display", serif;
+	font-family: "Gabriela", serif;
 	font-size: clamp(2rem, 2vw + 1.5rem, 3rem);
 	margin-bottom: 8px;
 }
@@ -140,7 +205,7 @@ nav a.active {
 	background: rgba(31, 111, 92, 0.12);
 	color: var(--brand-dark);
 	padding: 6px 12px;
-	border-radius: 999px;
+	border-radius: 0;
 	font-weight: 600;
 	font-size: 0.9rem;
 }
@@ -159,19 +224,16 @@ nav a.active {
 
 .book-card {
 	background: #fff;
-	border: 1px solid var(--line);
-	border-radius: 18px;
+	border: 2px solid var(--line);
+	border-radius: 0;
 	padding: 18px;
-	box-shadow: var(--shadow);
-	transition: transform 0.2s ease, box-shadow 0.2s ease;
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
 }
 
 .book-card:hover {
-	transform: translateY(-4px);
-	box-shadow: 0 20px 45px rgba(41, 33, 22, 0.16);
+	border-color: var(--brand);
 }
 
 .book-card-body {
@@ -183,19 +245,38 @@ nav a.active {
 }
 
 .book-cover {
-	border-radius: 14px;
-	color: #fff;
-	padding: 14px;
-	min-height: 180px;
+	border-radius: 0;
+	overflow: hidden;
+	position: relative;
+}
+
+.book-cover img {
+	width: 100%;
+	aspect-ratio: 2/3;
+	object-fit: cover;
+	display: block;
+}
+
+.cover-fallback {
+	width: 100%;
+	aspect-ratio: 2/3;
+	background: var(--brand, #1f6f5c);
+	border-radius: 0;
 	display: flex;
 	flex-direction: column;
-	justify-content: flex-end;
-	gap: 8px;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	padding: 1rem;
+	box-sizing: border-box;
+	color: white;
+	font-weight: bold;
+	text-align: center;
 	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
 }
 
 .cover-title {
-	font-family: "DM Serif Display", serif;
+	font-family: "Gabriela", serif;
 	font-size: 1.1rem;
 }
 
@@ -209,14 +290,26 @@ nav a.active {
 }
 
 .genre-tag {
-	background: rgba(31, 111, 92, 0.12);
-	color: var(--brand-dark);
+	background: rgba(255, 107, 53, 0.12);
+	color: var(--brand);
 	padding: 4px 10px;
-	border-radius: 999px;
+	border: 1px solid var(--line);
+	border-radius: 0;
 	font-size: 0.8rem;
 	font-weight: 600;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
+	display: inline-block;
+}
+
+.genre-tag-link {
+	text-decoration: none;
+	color: inherit;
+}
+
+.genre-tag-link:hover {
+	border-color: var(--brand);
+	background: rgba(255, 107, 53, 0.2);
 }
 
 .book-description {
@@ -289,7 +382,7 @@ nav a.active {
 	align-items: center;
 	justify-content: center;
 	border: 1px solid var(--line);
-	border-radius: 999px;
+	border-radius: 0;
 	overflow: hidden;
 }
 
@@ -341,7 +434,7 @@ input[type="text"],
 input[type="email"],
 input[type="password"] {
 	padding: 8px 10px;
-	border-radius: 10px;
+	border-radius: 0;
 	border: 1px solid var(--line);
 	background: #fff;
 	font-size: 0.95rem;
@@ -361,7 +454,7 @@ button,
 .primary,
 .ghost {
 	border: none;
-	border-radius: 999px;
+	border-radius: 0;
 	padding: 8px 16px;
 	font-weight: 600;
 	cursor: pointer;
@@ -369,20 +462,20 @@ button,
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 button,
 .primary {
 	background: var(--brand);
 	color: #fff;
-	box-shadow: 0 8px 18px rgba(31, 111, 92, 0.22);
+	border: 2px solid var(--brand);
 }
 
 button:hover,
 .primary:hover {
-	transform: translateY(-1px);
-	background: var(--brand-dark);
+	background: transparent;
+	color: var(--brand);
+	border: 2px solid var(--brand);
 }
 
 .danger {
@@ -402,32 +495,44 @@ button:hover,
 	margin-top: 12px;
 }
 
+.flash-messages {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 100;
+	margin: 0;
+	padding: 0;
+	background: var(--bg);
+	animation: fade-out 0.5s ease 3s forwards;
+}
+
 .flash {
-	margin: 16px 0 8px;
+	margin: 0;
 	padding: 12px 16px;
-	background: #fff4ce;
-	border: 1px solid #e8c765;
-	color: #6b4e00;
-	border-radius: 14px;
+	background: white;
+	border: 2px solid var(--line);
+	color: var(--ink);
+	border-radius: 0;
 	font-weight: 600;
 }
 
 .flash.success {
-	background: rgba(31, 111, 92, 0.12);
-	border: 1px solid rgba(31, 111, 92, 0.2);
+	background: white;
+	border: 2px solid var(--brand);
 	color: var(--brand-dark);
 }
 
 .flash.warning {
-	background: #fff4ce;
-	border: 1px solid #e8c765;
-	color: #6b4e00;
+	background: white;
+	border: 2px solid var(--line);
+	color: var(--ink);
 }
 
 .flash.error {
-	background: rgba(156, 47, 47, 0.12);
-	border: 1px solid rgba(156, 47, 47, 0.2);
-	color: #8b2b2b;
+	background: white;
+	border: 2px solid var(--danger);
+	color: var(--danger);
 }
 
 .cart-summary {
@@ -438,9 +543,8 @@ button:hover,
 	width: 100%;
 	border-collapse: collapse;
 	background: #fff;
-	border-radius: 18px;
+	border-radius: 0;
 	overflow: hidden;
-	box-shadow: var(--shadow);
 }
 
 .cart-table th,
@@ -488,9 +592,8 @@ button:hover,
 .subtotal-card {
 	background: #fff;
 	border: 1px solid var(--line);
-	border-radius: 16px;
+	border-radius: 0;
 	padding: 16px 18px;
-	box-shadow: var(--shadow);
 	min-width: 260px;
 }
 
@@ -538,11 +641,10 @@ button:hover,
 
 .modal-card {
 	background: #fff;
-	border-radius: 18px;
+	border-radius: 0;
 	padding: 20px 22px;
 	max-width: 360px;
 	width: 100%;
-	box-shadow: 0 20px 50px rgba(20, 17, 12, 0.2);
 }
 
 .modal-card h2 {
@@ -571,6 +673,17 @@ button:hover,
 	}
 }
 
+@keyframes fade-out {
+	from {
+		opacity: 1;
+		visibility: visible;
+	}
+	to {
+		opacity: 0;
+		visibility: hidden;
+	}
+}
+
 @media (max-width: 720px) {
 	.cart-table {
 		display: block;
@@ -586,6 +699,26 @@ button:hover,
 	}
 }
 
+/* Catalogue card — clickable cover and title */
+.book-cover-link {
+	display: block;
+	text-decoration: none;
+}
+
+.book-cover-link:hover .book-cover img,
+.book-cover-link:hover .cover-fallback {
+	opacity: 0.85;
+}
+
+.book-title-link {
+	color: inherit;
+	text-decoration: none;
+}
+
+.book-title-link:hover {
+	text-decoration: underline;
+}
+
 /* Book cover thumbnails in cart and checkout summary */
 .cart-cover-cell,
 .summary-cover-cell {
@@ -598,7 +731,7 @@ button:hover,
 	width: 40px;
 	height: 56px;
 	object-fit: cover;
-	border-radius: 3px;
+	border-radius: 0;
 	display: block;
 }
 
@@ -606,8 +739,8 @@ button:hover,
 .summary-cover-fallback {
 	width: 40px;
 	height: 56px;
-	background: #e8e0d4;
-	border-radius: 3px;
+	background: #ff8c42;
+	border-radius: 0;
 	display: flex;
 	align-items: center;
 	justify-content: center;

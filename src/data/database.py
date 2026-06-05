@@ -190,9 +190,11 @@ def init_db(cover_cache_dir=None):
         """
     )
     conn.commit()
+    print("[startup] Database tables ready.", flush=True)
     _seed_books(conn, cover_cache_dir)
     _seed_users(conn)
     conn.close()
+    print("[startup] Startup complete.", flush=True)
 
 
 def _seed_books(conn, cover_cache_dir=None):
@@ -218,6 +220,7 @@ def _seed_books(conn, cover_cache_dir=None):
     # deliberate: without it, a seed entry whose isbn had been removed would
     # be inserted as a brand new row, producing a duplicate title with no
     # cover. Skipping leaves any existing row for that title untouched.
+    print(f"[startup] Seeding {len(books)} book(s)...", flush=True)
     seeded_books = []
     for book in books:
         isbn = book.get("isbn")
@@ -225,6 +228,26 @@ def _seed_books(conn, cover_cache_dir=None):
             # No isbn means no primary key. Skip silently rather than
             # creating an unkeyed duplicate.
             continue
+
+        # If a row already exists for this title+author under a *different*
+        # isbn, the isbn was corrected in the seed file. Remove the stale row
+        # so the upsert below inserts under the new isbn rather than leaving
+        # both records in the table.
+        title = book.get("title", "")
+        author = book.get("author", "")
+        cursor.execute(
+            "SELECT isbn FROM books WHERE title = ? AND author = ? AND isbn != ?",
+            (title, author, isbn),
+        )
+        stale = cursor.fetchone()
+        if stale:
+            print(
+                f"[seed] ISBN changed for '{title}': "
+                f"{stale['isbn']} → {isbn}, removing old record.",
+                flush=True,
+            )
+            cursor.execute("DELETE FROM books WHERE isbn = ?", (stale["isbn"],))
+
         cursor.execute(
             """
             INSERT INTO books
@@ -252,11 +275,13 @@ def _seed_books(conn, cover_cache_dir=None):
         seeded_books.append(book)
 
     conn.commit()
+    print(f"[startup] {len(seeded_books)} book(s) seeded.", flush=True)
 
     # cache_covers is idempotent: it skips any cover already on disk, so it
     # is safe to pass every seeded book on every run. Only genuinely missing
     # covers trigger a network fetch.
     if cover_cache_dir and seeded_books:
+        print("[startup] Checking cover image cache...", flush=True)
         cache_covers(seeded_books, cover_cache_dir)
 
 
@@ -271,6 +296,7 @@ def _seed_users(conn):
     if not users:
         return
 
+    print(f"[startup] Seeding {len(users)} user(s)...", flush=True)
     cursor = conn.cursor()
 
     # email is the unique key for customers, so seeding is an upsert keyed on
@@ -323,6 +349,7 @@ def _seed_users(conn):
         except sqlite3.IntegrityError as e:
             # Most likely a duplicate phone_number. Skip this entry rather
             # than aborting the whole seed run.
-            print(f"[seed] skipped user {email!r}: {e}")
+            print(f"[seed] skipped user {email!r}: {e}", flush=True)
 
     conn.commit()
+    print(f"[startup] {len(users)} user(s) seeded.", flush=True)

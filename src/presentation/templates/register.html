@@ -2,11 +2,8 @@
 
 {% block content %}
 <style>
-    body {
-        font-family: 'Times New Roman', Times, serif;
-        background-color: rgb(220, 46, 39);
-        margin: 0;
-        min-height: 100vh;
+    .page-header {
+        display: none;
     }
     .container {
         display: flex;
@@ -18,12 +15,16 @@
     .login-box {
         background: white;
         padding: 2rem;
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 0;
         width: 100%;
         max-width: 420px;
     }
-    h2 { text-align: center; color: #333; margin-bottom: 0.25rem; }
+    .login-box h2 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 0.25rem;
+        font-family: "Gabriela", serif;
+    }
     .required-note {
         text-align: center;
         font-size: 12px;
@@ -32,15 +33,17 @@
     }
     .required-note span { color: #c0392b; }
     .form-group { margin-bottom: 1rem; }
-    label { display: block; margin-bottom: 4px; color: #555; font-size: 14px; }
+    .login-box label { display: block; margin-bottom: 4px; color: #555; font-size: 14px; }
     .required { color: #c0392b; margin-left: 2px; }
-    input[type="text"], input[type="password"] {
+    .login-box input[type="text"],
+    .login-box input[type="password"] {
         width: 100%;
         padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+        border: 2px solid var(--line);
+        border-radius: 0;
         box-sizing: border-box;
         font-size: 14px;
+        font-family: "Lora", serif;
     }
     input.field-error {
         border-color: #c0392b;
@@ -63,21 +66,21 @@
         text-transform: uppercase;
         letter-spacing: 0.05em;
         margin: 1.25rem 0 0.5rem;
-        border-top: 1px solid #eee;
+        border-top: 2px solid var(--line);
         padding-top: 1rem;
     }
-    button {
+    .login-box button {
         width: 100%;
         padding: 10px;
-        background-color: maroon;
+        background-color: var(--brand);
         color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: 0;
         cursor: pointer;
         font-size: 16px;
         margin-top: 0.5rem;
     }
-    button:hover { background-color: red; }
+    .login-box button:hover { background-color: var(--brand-dark); }
 </style>
 
 <div class="login-box">

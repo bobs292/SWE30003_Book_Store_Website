@@ -10,20 +10,21 @@
         <div class="nav-left">
             <a href="{{ url_for('homepage') }}" class="{% if request.endpoint == 'homepage' %}active{% endif %}">Home</a>
             <a href="{{ url_for('catalogue.catalogue_page') }}" class="{% if request.endpoint == 'catalogue.catalogue_page' %}active{% endif %}">Catalogue</a>
-
+        </div>
+        <div class="nav-right">
             <!-- Show when logged out -->
             {% if not current_user_email %}
-                <a href="{{ url_for('auth.register') }}" class="{% if request.endpoint == 'auth.register' %}active{% endif %}">Register</a>
-                <a href="{{ url_for('auth.login') }}" class="{% if request.endpoint == 'auth.login' %}active{% endif %}">Login</a>
+                <div class="auth-buttons">
+                    <a href="{{ url_for('auth.register') }}" class="auth-btn auth-btn-left {% if request.endpoint == 'auth.register' %}active{% endif %}">Register</a>
+                    <a href="{{ url_for('auth.login') }}" class="auth-btn auth-btn-right {% if request.endpoint == 'auth.login' %}active{% endif %}">Login</a>
+                </div>
             {% endif %}
             <!-- Show when logged in -->
             {% if current_user_email %}
-                <a href="{{ url_for('auth.logout') }}">Logout</a>
-            {% endif %}
-        </div>
-        <div class="nav-right">
-            {% if current_user_email %}
-                <div class="nav-user">Logged in as {{ current_user_email }}</div>
+                <div class="nav-user-section">
+                    <a href="{{ url_for('auth.logout') }}" class="logout-link">Logout</a>
+                    <div class="nav-user">Logged in as<br>{{ current_user_email }}</div>
+                </div>
             {% endif %}
             <a href="{{ url_for('order.cart') }}" class="cart-link {% if request.endpoint == 'order.cart' %}active{% endif %}">
                 <span class="cart-icon" aria-hidden="true">
@@ -56,6 +57,10 @@
         Cover images provided by
         <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library</a>
         (Covers API).
+        <br>
+        Hero image by
+        <a href="https://unsplash.com/photos/brown-wooden-book-shelf-with-books-BEEyeib-am8" target="_blank" rel="noopener noreferrer">Unsplash</a>
+        (CC0).
     </footer>
 </body>
 </html>

@@ -106,7 +106,12 @@ def create_app():
     # as it does not belong to any specific area of the application.
     @app.route("/")
     def homepage():
-        return render_template("home.html")
+        books = catalogue_service.list_books()
+        collections = {}
+        for book in books:
+            genre = book.get("genre", "General")
+            collections.setdefault(genre, []).append(book)
+        return render_template("home.html", collections=collections)
 
     @app.context_processor
     def inject_cart_count():

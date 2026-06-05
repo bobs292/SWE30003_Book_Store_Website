@@ -107,6 +107,600 @@
             "description": "Three women, three marriages, three secrets. A darkly comic tale of school politics, petty rivalries, and a murder at a trivia night.",
             "price": 19.5,
             "stock": 11
+        },
+        {
+            "title": "The Silent Patient",
+            "author": "Alex Michaelides",
+            "isbn": "9781250301697",
+            "genre": "Mystery",
+            "description": "Alicia Berenson, a famous painter, shoots her husband five times and then never speaks another word. Her therapist Theo Faber becomes obsessed with uncovering her motive.",
+            "price": 19.99,
+            "stock": 14
+        },
+        {
+            "title": "The Thursday Murder Club",
+            "author": "Richard Osman",
+            "isbn": "9780241988268",
+            "genre": "Mystery",
+            "description": "In a peaceful retirement village, four unlikely friends meet weekly to examine cold cases. When a real murder occurs on their doorstep, the Thursday Murder Club finds their first live case.",
+            "price": 22.99,
+            "stock": 9
+        },
+        {
+            "title": "And Then There Were None",
+            "author": "Agatha Christie",
+            "isbn": "9780062073488",
+            "genre": "Mystery",
+            "description": "Ten strangers are lured to an isolated island mansion and murdered one by one. The world's best-selling mystery of all time.",
+            "price": 16.99,
+            "stock": 18
+        },
+        {
+            "title": "The Girl with the Dragon Tattoo",
+            "author": "Stieg Larsson",
+            "isbn": "9780307454546",
+            "genre": "Mystery",
+            "description": "Journalist Mikael Blomkvist and hacker Lisbeth Salander investigate a decades-old disappearance in a powerful Swedish family, uncovering a dark web of secrets.",
+            "price": 21.99,
+            "stock": 7
+        },
+        {
+            "title": "The Girl on the Train",
+            "author": "Paula Hawkins",
+            "isbn": "9781594634024",
+            "genre": "Mystery",
+            "description": "Rachel takes the same train every morning and becomes obsessed with a couple she sees from the window — until she witnesses something shocking and finds herself entangled in a missing-persons investigation.",
+            "price": 19.99,
+            "stock": 11
+        },
+        {
+            "title": "In the Woods",
+            "author": "Tana French",
+            "isbn": "9780143113492",
+            "genre": "Mystery",
+            "description": "Dublin detective Rob Ryan returns to the woods where he survived a childhood trauma — three children went in, only he came out — to investigate a new murder on the same ground.",
+            "price": 21.99,
+            "stock": 5
+        },
+        {
+            "title": "The Da Vinci Code",
+            "author": "Dan Brown",
+            "isbn": "9780307474278",
+            "genre": "Mystery",
+            "description": "Harvard symbologist Robert Langdon is drawn into a deadly race to uncover a secret that the Catholic Church has hidden for two thousand years, following a murder in the Louvre.",
+            "price": 19.99,
+            "stock": 13
+        },
+        {
+            "title": "Project Hail Mary",
+            "author": "Andy Weir",
+            "isbn": "9780593135204",
+            "genre": "Science Fiction",
+            "description": "Ryland Grace wakes alone on a spacecraft with no memory of how he got there. His mission: save Earth from an extinction-level threat — but first he has to remember what that threat is.",
+            "price": 22.99,
+            "stock": 10
+        },
+        {
+            "title": "The Hitchhiker's Guide to the Galaxy",
+            "author": "Douglas Adams",
+            "isbn": "9780345391803",
+            "genre": "Science Fiction",
+            "description": "Seconds before Earth is demolished to make way for a hyperspace bypass, Arthur Dent is swept into a hilarious journey across the universe with his alien friend Ford Prefect.",
+            "price": 17.99,
+            "stock": 20
+        },
+        {
+            "title": "1984",
+            "author": "George Orwell",
+            "isbn": "9780451524935",
+            "genre": "Science Fiction",
+            "description": "In a totalitarian future society, Winston Smith works for the Party rewriting history. His secret rebellion against the all-seeing Big Brother puts him in mortal danger.",
+            "price": 16.99,
+            "stock": 22
+        },
+        {
+            "title": "Brave New World",
+            "author": "Aldous Huxley",
+            "isbn": "9780060850524",
+            "genre": "Science Fiction",
+            "description": "In a future where humanity is engineered for contentment, Bernard Marx starts to question the perfect society — a world of pleasure without freedom, love, or meaning.",
+            "price": 17.99,
+            "stock": 15
+        },
+        {
+            "title": "The Three-Body Problem",
+            "author": "Liu Cixin",
+            "isbn": "9780765382030",
+            "genre": "Science Fiction",
+            "description": "Set against the backdrop of China's Cultural Revolution, a secret military project makes contact with an alien civilisation — beginning a chain of events that will threaten humanity's future.",
+            "price": 22.99,
+            "stock": 8
+        },
+        {
+            "title": "Ready Player One",
+            "author": "Ernest Cline",
+            "isbn": "9780307887436",
+            "genre": "Science Fiction",
+            "description": "In a dystopian 2045, teenager Wade Watts escapes into a vast virtual reality world and hunts for an Easter egg hidden by its creator — the prize: control of the entire simulation.",
+            "price": 21.99,
+            "stock": 12
+        },
+        {
+            "title": "Ender's Game",
+            "author": "Orson Scott Card",
+            "isbn": "9780812550702",
+            "genre": "Science Fiction",
+            "description": "Gifted child Ender Wiggin is recruited to a space academy to be trained as a commander in humanity's war against an alien species, unaware of the true nature of his final battle.",
+            "price": 18.99,
+            "stock": 9
+        },
+        {
+            "title": "The Handmaid's Tale",
+            "author": "Margaret Atwood",
+            "isbn": "9780385490818",
+            "genre": "Science Fiction",
+            "description": "In the theocratic republic of Gilead, women are stripped of all rights. Offred, a Handmaid assigned to bear children for the ruling class, searches for a way to survive and resist.",
+            "price": 19.99,
+            "stock": 16
+        },
+        {
+            "title": "A Game of Thrones",
+            "author": "George R.R. Martin",
+            "isbn": "9780553386790",
+            "genre": "Fantasy",
+            "description": "Nine noble families fight for control of the Iron Throne while an ancient enemy awakens beyond a massive wall of ice at the edge of the kingdom.",
+            "price": 23.99,
+            "stock": 14
+        },
+        {
+            "title": "The Hobbit",
+            "author": "J.R.R. Tolkien",
+            "isbn": "9780547928227",
+            "genre": "Fantasy",
+            "description": "Bilbo Baggins, a comfort-loving hobbit, is swept into an epic quest to reclaim a lost dwarf kingdom from a fearsome dragon — and discovers that there is more to him than he thought.",
+            "price": 19.99,
+            "stock": 18
+        },
+        {
+            "title": "American Gods",
+            "author": "Neil Gaiman",
+            "isbn": "9780380789030",
+            "genre": "Fantasy",
+            "description": "Ex-convict Shadow is recruited by the mysterious Mr Wednesday to join a war between old gods brought to America by immigrants and the new gods of technology and media.",
+            "price": 21.99,
+            "stock": 7
+        },
+        {
+            "title": "The Night Circus",
+            "author": "Erin Morgenstern",
+            "isbn": "9780307744432",
+            "genre": "Fantasy",
+            "description": "A mysterious black-and-white circus appears without warning. Inside, two young magicians are pitted against each other in a contest that will decide both their fates.",
+            "price": 22.99,
+            "stock": 9
+        },
+        {
+            "title": "Mistborn: The Final Empire",
+            "author": "Brandon Sanderson",
+            "isbn": "9780765311788",
+            "genre": "Fantasy",
+            "description": "In a world of ash and darkness ruled by an immortal Lord Ruler, a crew of thieves plans the most daring heist in history — to topple an empire using the power of swallowed metals.",
+            "price": 21.99,
+            "stock": 11
+        },
+        {
+            "title": "Harry Potter and the Philosopher's Stone",
+            "author": "J.K. Rowling",
+            "isbn": "9780747532699",
+            "genre": "Fantasy",
+            "description": "Orphan Harry Potter discovers on his eleventh birthday that he is a wizard, destined to attend Hogwarts School of Witchcraft and Wizardry — and that he is famous in the magical world.",
+            "price": 19.99,
+            "stock": 25
+        },
+        {
+            "title": "The Lies of Locke Lamora",
+            "author": "Scott Lynch",
+            "isbn": "9780553588941",
+            "genre": "Fantasy",
+            "description": "In a city of secrets and con artists, master thief Locke Lamora and his Gentleman Bastards run elaborate schemes — until they are drawn into a deadly game with a mysterious criminal called the Grey King.",
+            "price": 22.99,
+            "stock": 6
+        },
+        {
+            "title": "The Book Thief",
+            "author": "Markus Zusak",
+            "isbn": "9780375842207",
+            "genre": "Historical Fiction",
+            "description": "Narrated by Death, this is the story of Liesel Meminger, a young girl living with foster parents in Nazi Germany who steals books and shares them with her neighbours during Allied air raids.",
+            "price": 19.99,
+            "stock": 16
+        },
+        {
+            "title": "All the Light We Cannot See",
+            "author": "Anthony Doerr",
+            "isbn": "9781476746586",
+            "genre": "Historical Fiction",
+            "description": "The parallel stories of a blind French girl and a German boy converge in occupied France during World War II, bound together by a legendary diamond and the radio waves between them.",
+            "price": 21.99,
+            "stock": 13
+        },
+        {
+            "title": "The Nightingale",
+            "author": "Kristin Hannah",
+            "isbn": "9781250080400",
+            "genre": "Historical Fiction",
+            "description": "Two sisters in Nazi-occupied France each choose a different path of survival and resistance. A testament to love, resilience, and the indomitable human spirit.",
+            "price": 22.99,
+            "stock": 10
+        },
+        {
+            "title": "Pachinko",
+            "author": "Min Jin Lee",
+            "isbn": "9781455563937",
+            "genre": "Historical Fiction",
+            "description": "An epic saga following four generations of a Korean family who migrate to Japan, facing discrimination and hardship across a century of turbulent history.",
+            "price": 23.99,
+            "stock": 8
+        },
+        {
+            "title": "Wolf Hall",
+            "author": "Hilary Mantel",
+            "isbn": "9781250024176",
+            "genre": "Historical Fiction",
+            "description": "The rise of Thomas Cromwell at the court of Henry VIII, as told through the eyes of the blacksmith's son who became the most powerful man in England.",
+            "price": 24.99,
+            "stock": 5
+        },
+        {
+            "title": "The Alice Network",
+            "author": "Kate Quinn",
+            "isbn": "9780062654199",
+            "genre": "Historical Fiction",
+            "description": "Two women a generation apart — a female spy in World War I and an American socialite after World War II — become entangled in a story of courage, loss, and redemption across France.",
+            "price": 21.99,
+            "stock": 9
+        },
+        {
+            "title": "Where the Crawdads Sing",
+            "author": "Delia Owens",
+            "isbn": "9780735224292",
+            "genre": "Contemporary",
+            "description": "Kya Clark, the 'Marsh Girl', raises herself alone in the marshes of North Carolina and becomes a suspect in a local murder — a story of isolation, survival, and love.",
+            "price": 21.99,
+            "stock": 20
+        },
+        {
+            "title": "The Midnight Library",
+            "author": "Matt Haig",
+            "isbn": "9780525559474",
+            "genre": "Contemporary",
+            "description": "Nora Seed finds a library between life and death containing books of every life she could have lived. With the help of an unusual librarian, she must face the question: what makes life worth living?",
+            "price": 21.99,
+            "stock": 17
+        },
+        {
+            "title": "A Man Called Ove",
+            "author": "Fredrik Backman",
+            "isbn": "9781476738024",
+            "genre": "Contemporary",
+            "description": "Ove is the grumpiest man in the neighbourhood, a man of routines and principles who has given up on life — until a young family moves in next door and turns everything upside down.",
+            "price": 19.99,
+            "stock": 12
+        },
+        {
+            "title": "Anxious People",
+            "author": "Fredrik Backman",
+            "isbn": "9781982134518",
+            "genre": "Contemporary",
+            "description": "A failed bank robbery leads to a hostage situation involving a group of strangers at an apartment viewing, each with their own secrets and struggles. A darkly comic novel about human connection.",
+            "price": 21.99,
+            "stock": 8
+        },
+        {
+            "title": "The Rosie Project",
+            "author": "Graeme Simsion",
+            "isbn": "9781922147844",
+            "genre": "Contemporary",
+            "description": "Genetics professor Don Tillman launches a scientific survey to find the perfect wife. His methodology is flawless. The results are not. A warm, funny novel from a celebrated Australian author.",
+            "price": 19.99,
+            "stock": 14
+        },
+        {
+            "title": "Daisy Jones and the Six",
+            "author": "Taylor Jenkins Reid",
+            "isbn": "9781787462144",
+            "genre": "Contemporary",
+            "description": "Told in oral-history format, the story of a legendary 1970s rock band and the charismatic singer who joined them — and why, at the height of their fame, they suddenly split up.",
+            "price": 22.99,
+            "stock": 11
+        },
+        {
+            "title": "The Road",
+            "author": "Cormac McCarthy",
+            "isbn": "9780307387899",
+            "genre": "Literary Fiction",
+            "description": "A father and his young son journey across a post-apocalyptic America, carrying the fire of civilisation as the last of the good men in a world gone to ash and darkness.",
+            "price": 18.99,
+            "stock": 10
+        },
+        {
+            "title": "The Kite Runner",
+            "author": "Khaled Hosseini",
+            "isbn": "9781594631931",
+            "genre": "Literary Fiction",
+            "description": "The story of Amir and his servant's son Hassan, whose friendship is torn apart by a devastating act of cowardice — and Amir's lifelong quest for redemption across war-torn Afghanistan.",
+            "price": 19.99,
+            "stock": 15
+        },
+        {
+            "title": "Life of Pi",
+            "author": "Yann Martel",
+            "isbn": "9780156027328",
+            "genre": "Literary Fiction",
+            "description": "Pi Patel survives a shipwreck and spends 227 days at sea on a lifeboat with a Bengal tiger named Richard Parker. A novel about faith, survival, and the stories we tell ourselves.",
+            "price": 18.99,
+            "stock": 13
+        },
+        {
+            "title": "The Alchemist",
+            "author": "Paulo Coelho",
+            "isbn": "9780061122415",
+            "genre": "Literary Fiction",
+            "description": "Santiago, a young Andalusian shepherd, travels from Spain to Egypt in search of treasure, learning that the journey itself — and listening to the soul of the world — is the real prize.",
+            "price": 17.99,
+            "stock": 18
+        },
+        {
+            "title": "To Kill a Mockingbird",
+            "author": "Harper Lee",
+            "isbn": "9780099419785",
+            "genre": "Literary Fiction",
+            "description": "Set in the American Deep South during the 1930s, young Scout Finch watches her father defend a Black man unjustly accused of a serious crime — a novel about racial injustice and moral courage.",
+            "price": 17.99,
+            "stock": 20
+        },
+        {
+            "title": "A Little Life",
+            "author": "Hanya Yanagihara",
+            "isbn": "9780804172707",
+            "genre": "Literary Fiction",
+            "description": "Four friends navigate life in New York over decades, but the story circles the enigmatic Jude St Francis and the devastating mystery of his past. A profound and devastating novel.",
+            "price": 24.99,
+            "stock": 7
+        },
+        {
+            "title": "Pride and Prejudice",
+            "author": "Jane Austen",
+            "isbn": "9780141439518",
+            "genre": "Literary Fiction",
+            "description": "Elizabeth Bennet must navigate questions of manners, morality, and marriage in early nineteenth-century England, while sparring with the proud and seemingly cold Mr Darcy.",
+            "price": 12.99,
+            "stock": 22
+        },
+        {
+            "title": "Educated",
+            "author": "Tara Westover",
+            "isbn": "9780399590504",
+            "genre": "Nonfiction",
+            "description": "A memoir about a woman who grew up in a survivalist family in rural Idaho, never setting foot in a classroom until age seventeen, and her extraordinary journey to Cambridge University.",
+            "price": 22.99,
+            "stock": 16
+        },
+        {
+            "title": "Becoming",
+            "author": "Michelle Obama",
+            "isbn": "9781524763138",
+            "genre": "Nonfiction",
+            "description": "The memoir of the former First Lady of the United States, tracing her journey from the South Side of Chicago to the White House — an intimate and powerful account of a remarkable life.",
+            "price": 24.99,
+            "stock": 14
+        },
+        {
+            "title": "Atomic Habits",
+            "author": "James Clear",
+            "isbn": "9780735211292",
+            "genre": "Nonfiction",
+            "description": "A practical guide to building good habits and breaking bad ones, showing how tiny changes compound into remarkable results. The definitive book on behavioural change.",
+            "price": 26.99,
+            "stock": 20
+        },
+        {
+            "title": "Thinking, Fast and Slow",
+            "author": "Daniel Kahneman",
+            "isbn": "9780374533557",
+            "genre": "Nonfiction",
+            "description": "Nobel laureate Daniel Kahneman explores the two systems that drive the way we think — fast, intuitive thinking and slow, deliberate reasoning — and how they shape our judgements.",
+            "price": 24.99,
+            "stock": 11
+        },
+        {
+            "title": "Born a Crime",
+            "author": "Trevor Noah",
+            "isbn": "9780399588174",
+            "genre": "Nonfiction",
+            "description": "The comedian and TV host's memoir about growing up mixed-race under apartheid in South Africa, where his very existence was illegal. Funny, harrowing, and deeply moving.",
+            "price": 22.99,
+            "stock": 13
+        },
+        {
+            "title": "The Body Keeps the Score",
+            "author": "Bessel van der Kolk",
+            "isbn": "9780143127741",
+            "genre": "Nonfiction",
+            "description": "A leading trauma expert shows how trauma reshapes the body and brain, and presents innovative treatments that can break trauma's hold — from yoga and neurofeedback to theatre.",
+            "price": 24.99,
+            "stock": 9
+        },
+        {
+            "title": "Quiet: The Power of Introverts",
+            "author": "Susan Cain",
+            "isbn": "9780307352149",
+            "genre": "Nonfiction",
+            "description": "A ground-breaking exploration of introversion in a world that can't stop talking, revealing that introverts are a hugely under-valued source of talent, energy, and happiness.",
+            "price": 22.99,
+            "stock": 10
+        },
+        {
+            "title": "When Breath Becomes Air",
+            "author": "Paul Kalanithi",
+            "isbn": "9780812988406",
+            "genre": "Nonfiction",
+            "description": "A brilliant neurosurgeon is diagnosed with terminal cancer at age 36, and turns to writing to understand what makes life meaningful in the face of death. Unforgettable.",
+            "price": 21.99,
+            "stock": 8
+        },
+        {
+            "title": "It Ends with Us",
+            "author": "Colleen Hoover",
+            "isbn": "9781501110368",
+            "genre": "Romance",
+            "description": "Lily hasn't always had it easy, but she's determined to build a better future. When she meets a neurosurgeon with a complicated past, she must decide how much a love is really worth.",
+            "price": 19.99,
+            "stock": 24
+        },
+        {
+            "title": "The Hating Game",
+            "author": "Sally Thorne",
+            "isbn": "9780062439598",
+            "genre": "Romance",
+            "description": "Lucy and Joshua are executive assistants to co-CEOs who hate each other. When a promotion puts them in direct competition, their mutual animosity gets dangerously complicated.",
+            "price": 19.99,
+            "stock": 12
+        },
+        {
+            "title": "Beach Read",
+            "author": "Emily Henry",
+            "isbn": "9781984806734",
+            "genre": "Romance",
+            "description": "January is a romance novelist who doesn't believe in love. Augustus writes literary fiction and scoffs at happy endings. When they become neighbours for a summer, they make a bet.",
+            "price": 21.99,
+            "stock": 16
+        },
+        {
+            "title": "People We Meet on Vacation",
+            "author": "Emily Henry",
+            "isbn": "9781984806758",
+            "genre": "Romance",
+            "description": "Alex and Poppy have been best friends for ten years and spent every summer on holiday together — until one trip two years ago that ruined everything. Now Poppy wants one more chance.",
+            "price": 21.99,
+            "stock": 14
+        },
+        {
+            "title": "Fourth Wing",
+            "author": "Rebecca Yarros",
+            "isbn": "9781649374172",
+            "genre": "Romance",
+            "description": "Violet Sorrengail enters Basgiath War College to become a dragon rider instead of a scribe. She must survive a gruelling first year — and her undeniable attraction to a dragon rider who wants her dead.",
+            "price": 24.99,
+            "stock": 18
+        },
+        {
+            "title": "Ugly Love",
+            "author": "Colleen Hoover",
+            "isbn": "9781476753188",
+            "genre": "Romance",
+            "description": "When Tate meets airline pilot Miles, they agree to a relationship with no strings attached. But love doesn't follow rules, and Miles's secrets could tear everything apart.",
+            "price": 19.99,
+            "stock": 10
+        },
+        {
+            "title": "Into Thin Air",
+            "author": "Jon Krakauer",
+            "isbn": "9780385494786",
+            "genre": "Adventure",
+            "description": "A first-hand account of the 1996 Mount Everest disaster, in which eight climbers died in a savage storm. The author was on the mountain and barely survived to tell the story.",
+            "price": 20.99,
+            "stock": 8
+        },
+        {
+            "title": "Wild",
+            "author": "Cheryl Strayed",
+            "isbn": "9780307476074",
+            "genre": "Adventure",
+            "description": "After the collapse of her marriage and the death of her mother, Cheryl Strayed sets out alone to hike over a thousand miles of the Pacific Crest Trail — a journey of survival and self-discovery.",
+            "price": 20.99,
+            "stock": 9
+        },
+        {
+            "title": "Endurance",
+            "author": "Alfred Lansing",
+            "isbn": "9780465062881",
+            "genre": "Adventure",
+            "description": "The gripping account of Ernest Shackleton's failed 1914 Antarctic expedition, in which his ship was crushed by ice and his crew survived two years in one of history's greatest feats of leadership.",
+            "price": 21.99,
+            "stock": 6
+        },
+        {
+            "title": "A Walk in the Woods",
+            "author": "Bill Bryson",
+            "isbn": "9780307279460",
+            "genre": "Adventure",
+            "description": "Bill Bryson attempts to hike the Appalachian Trail — 2,100 miles from Georgia to Maine — and discovers the grandeur and peculiarity of America, with his friend Katz often stumbling beside him.",
+            "price": 19.99,
+            "stock": 10
+        },
+        {
+            "title": "Never Let Me Go",
+            "author": "Kazuo Ishiguro",
+            "isbn": "9781400078776",
+            "genre": "Speculative",
+            "description": "Kathy, Tommy, and Ruth grew up together at Hailsham, an idyllic English boarding school. As adults, they begin to understand the terrible purpose for which they were raised.",
+            "price": 19.99,
+            "stock": 9
+        },
+        {
+            "title": "Dark Matter",
+            "author": "Blake Crouch",
+            "isbn": "9781101904220",
+            "genre": "Speculative",
+            "description": "Physicist Jason Dessen is abducted into an alternate version of his life. To return to his family, he must navigate a mind-bending labyrinth of quantum worlds where every choice matters.",
+            "price": 21.99,
+            "stock": 12
+        },
+        {
+            "title": "Recursion",
+            "author": "Blake Crouch",
+            "isbn": "9781524759780",
+            "genre": "Speculative",
+            "description": "A neuroscientist invents a device to preserve memories, but it becomes a machine that rewrites the past — sending Barry Sutton and Helena Smith on a desperate mission to stop the end of reality.",
+            "price": 21.99,
+            "stock": 8
+        },
+        {
+            "title": "The Power",
+            "author": "Naomi Alderman",
+            "isbn": "9780316547611",
+            "genre": "Speculative",
+            "description": "Teenage girls discover they can release electrical jolts from their fingertips. As the power spreads to all women, the world's social order violently reverses in this provocative speculative novel.",
+            "price": 20.99,
+            "stock": 7
+        },
+        {
+            "title": "Cloudstreet",
+            "author": "Tim Winton",
+            "isbn": "9780743246064",
+            "genre": "Literary Fiction",
+            "description": "Two troubled Australian families share a rambling Perth house for twenty years after World War II, navigating hardship, grief, and unexpected joy. A classic of Australian literature.",
+            "price": 21.99,
+            "stock": 11
+        },
+        {
+            "title": "The Slap",
+            "author": "Christos Tsiolkas",
+            "isbn": "9781741758207",
+            "genre": "Contemporary",
+            "description": "At a suburban Melbourne barbecue, a man slaps a child who is not his own. The act sends shockwaves through a circle of friends and family, exposing fault lines of race, class, and desire.",
+            "price": 21.99,
+            "stock": 8
+        },
+        {
+            "title": "The Midnight Bell",
+            "author": "Jack Dann",
+            "isbn": "9780732289737",
+            "genre": "Speculative",
+            "description": "An anthology of Australian speculative fiction featuring some of the finest voices in the genre, exploring the uncanny, the futuristic, and the darkly strange.",
+            "price": 22.99,
+            "stock": 4
         }
     ],
     "users": [

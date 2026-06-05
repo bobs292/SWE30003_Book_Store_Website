@@ -1,112 +1,52 @@
-import re
+"""Cart and checkout management routes.
+
+Handles shopping cart operations (view, add, update, remove, clear) and the
+checkout flow with address validation and order processing.
+"""
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
-
-def _normalize_phone(phone):
-    """Convert +61 / 61 international format to domestic 04XXXXXXXX."""
-    if not phone:
-        return phone
-    n = phone.replace(" ", "")
-    if n.startswith("+61"):
-        n = "0" + n[3:]
-    elif n.startswith("61") and len(n) == 11:
-        n = "0" + n[2:]
-    return n
-
-
-def _validate_checkout_fields(street, suburb, state, postcode, phone):
-    errors = {}
-    if not street:
-        errors["street"] = "Street address is required."
-    if not suburb:
-        errors["suburb"] = "Suburb is required."
-    if not state:
-        errors["state"] = "State is required."
-    elif not re.fullmatch(r"[A-Za-z]{2,3}", state):
-        errors["state"] = "State must be 2 or 3 letters (e.g. VIC, NSW)."
-    if not postcode:
-        errors["postcode"] = "Postcode is required."
-    elif not re.fullmatch(r"\d{4}", postcode):
-        errors["postcode"] = "Postcode must be exactly 4 digits (e.g. 3000)."
-    if phone:
-        normalized = _normalize_phone(phone)
-        if not re.fullmatch(r"04\d{8}", normalized):
-            errors["phone_number"] = (
-                "Enter a valid Australian mobile number (e.g. 0412 345 678)."
-            )
-    return errors
-
-
-def _coerce_int(value, default=0):
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return default
-
-
-def _coerce_float(value, default=0.0):
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return default
+from src.domain.services.address_validation_service import AddressValidationService
+from src.domain.services.cart_service import CartService
+from src.domain.services.phone_service import PhoneService
 
 
 def _get_cart():
+    """Retrieves the shopping cart from session, normalizing its structure."""
     cart = session.get("cart")
     if not isinstance(cart, dict):
         return {}
-    return {str(key): _coerce_int(value, 0) for key, value in cart.items()}
+    return CartService.normalize_cart(cart)
 
 
 def _save_cart(cart):
+    """Persists the shopping cart to session storage."""
     session["cart"] = cart
 
 
-def _build_cart_items(books, cart):
-    items = []
-    subtotal = 0.0
-    books_by_id = {str(book["id"]): book for book in books}
-    cart_changed = False
-
-    for book_id in list(cart.keys()):
-        if book_id not in books_by_id:
-            cart.pop(book_id, None)
-            cart_changed = True
-            continue
-
-        quantity = max(cart.get(book_id, 0), 0)
-        if quantity == 0:
-            cart.pop(book_id, None)
-            cart_changed = True
-            continue
-
-        book = books_by_id[book_id]
-        price = _coerce_float(book.get("price", 0.0), 0.0)
-        line_total = price * quantity
-        subtotal += line_total
-        items.append(
-            {
-                "book": book,
-                "quantity": quantity,
-                "line_total": line_total,
-            }
-        )
-
-    if cart_changed:
-        _save_cart(cart)
-
-    return items, subtotal
-
-
 def create_order_routes(catalogue_service, checkout_service, customer_repo):
+    """Creates and returns the order blueprint with all cart/checkout routes.
+
+    Args:
+        catalogue_service: Service for accessing book data and inventory
+        checkout_service: Service for processing orders and creating invoices
+        customer_repo: Repository for accessing customer data
+
+    Returns:
+        Flask Blueprint with order-related routes
+    """
     order = Blueprint("order", __name__)
 
     @order.route("/cart")
     def cart():
+        """Displays the shopping cart with all items, subtotal, and item count."""
         books = catalogue_service.list_books()
         cart_data = _get_cart()
-        cart_items, subtotal = _build_cart_items(books, cart_data)
+        cart_items, subtotal, cart_changed = CartService.build_cart_items(
+            books, cart_data
+        )
+        if cart_changed:
+            _save_cart(cart_data)
         total_items = sum(cart_data.values()) if cart_data else 0
         return render_template(
             "cart.html",
@@ -117,10 +57,11 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
 
     @order.route("/cart/add", methods=["POST"])
     def cart_add():
+        """Adds a book to the shopping cart with stock limit enforcement."""
         books = catalogue_service.list_books()
         books_by_id = {str(book["id"]): book for book in books}
         book_id = request.form.get("book_id")
-        quantity = _coerce_int(request.form.get("quantity"), 0)
+        quantity = CartService.safe_int(request.form.get("quantity"), 0)
 
         if not book_id or book_id not in books_by_id:
             return redirect(request.referrer or url_for("catalogue.catalogue_page"))
@@ -136,18 +77,26 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
         cart_data = _get_cart()
         current_qty = cart_data.get(book_id, 0)
         new_qty = min(current_qty + quantity, book["stock"])
-        cart_data[book_id] = new_qty
-        _save_cart(cart_data)
-        flash(f"Added '{book['title']}' to your cart.", "success")
+
+        if new_qty == current_qty:
+            flash(
+                f"Already have {current_qty} in cart. Max stock is {book['stock']}.",
+                "warning",
+            )
+        else:
+            cart_data[book_id] = new_qty
+            _save_cart(cart_data)
+            flash(f"Added '{book['title']}' to your cart.", "success")
 
         return redirect(request.referrer or url_for("catalogue.catalogue_page"))
 
     @order.route("/cart/update", methods=["POST"])
     def cart_update():
+        """Updates quantity for a cart item or removes it if quantity <= 0."""
         books = catalogue_service.list_books()
         books_by_id = {str(book["id"]): book for book in books}
         book_id = request.form.get("book_id")
-        quantity = _coerce_int(request.form.get("quantity", 1), 1)
+        quantity = CartService.safe_int(request.form.get("quantity", 1), 1)
 
         cart_data = _get_cart()
         if not book_id or book_id not in cart_data:
@@ -178,6 +127,7 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
 
     @order.route("/cart/remove", methods=["POST"])
     def cart_remove():
+        """Removes a specific book from the shopping cart."""
         books = catalogue_service.list_books()
         books_by_id = {str(book["id"]): book for book in books}
         book_id = request.form.get("book_id")
@@ -194,6 +144,7 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
 
     @order.route("/cart/clear", methods=["POST"])
     def cart_clear():
+        """Removes all items from the shopping cart."""
         cart_data = _get_cart()
         total_items = sum(cart_data.values()) if cart_data else 0
         _save_cart({})
@@ -203,13 +154,19 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
 
     @order.route("/confirmation/<int:order_id>")
     def confirmation(order_id):
+        """Displays the order confirmation page for a completed order."""
         return render_template("order_confirmation.html", order_id=order_id)
 
     @order.route("/checkout", methods=["GET", "POST"])
     def checkout():
+        """Handles checkout flow with address validation and order processing.
+
+        GET: Displays checkout form with customer details and cart items.
+        POST: Validates address and phone, processes payment, and creates order.
+        """
         customer_id = session.get("customer_id")
         if not customer_id:
-            flash("Please log in to checkout.", "error")
+            session["checkout_login_message"] = True
             return redirect(url_for("auth.login"))
 
         customer = customer_repo.find_by_id(customer_id)
@@ -225,16 +182,28 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
             postcode = form.get("postcode", "").strip()
             phone = form.get("phone_number", "").strip()
 
-            errors = (
-                {}
-                if is_pickup
-                else _validate_checkout_fields(street, suburb, state, postcode, phone)
-            )
+            if is_pickup:
+                errors = {}
+            else:
+                address_validator = AddressValidationService()
+                errors = address_validator.validate_address(
+                    street, suburb, state, postcode
+                )
+                if not errors and phone:
+                    if not PhoneService.is_valid_australian_mobile(phone):
+                        errors["phone_number"] = (
+                            "Enter a valid Australian mobile number "
+                            "(e.g. 0412 345 678)."
+                        )
 
             if errors:
                 books = catalogue_service.list_books()
                 cart_data = _get_cart()
-                cart_items, subtotal = _build_cart_items(books, cart_data)
+                cart_items, subtotal, cart_changed = CartService.build_cart_items(
+                    books, cart_data
+                )
+                if cart_changed:
+                    _save_cart(cart_data)
                 return render_template(
                     "checkout.html",
                     cart_items=cart_items,
@@ -250,7 +219,7 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
                 return redirect(url_for("order.cart"))
 
             books = catalogue_service.list_books()
-            cart_items, subtotal = _build_cart_items(books, cart_data)
+            cart_items, subtotal, _ = CartService.build_cart_items(books, cart_data)
             if not cart_items:
                 flash("No valid items in cart.", "error")
                 return redirect(url_for("order.cart"))
@@ -270,7 +239,9 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
                 shipping_fee = 0.0
             else:
                 shipping_address = f"{street}, {suburb} {state} {postcode}"
-                shipping_phone = _normalize_phone(phone) if phone else None
+                shipping_phone = (
+                    PhoneService.normalize_australian_phone(phone) if phone else None
+                )
                 shipping_fee = 9.99
 
             try:
@@ -312,7 +283,7 @@ def create_order_routes(catalogue_service, checkout_service, customer_repo):
         # GET
         books = catalogue_service.list_books()
         cart_data = _get_cart()
-        cart_items, subtotal = _build_cart_items(books, cart_data)
+        cart_items, subtotal, _ = CartService.build_cart_items(books, cart_data)
         return render_template(
             "checkout.html",
             cart_items=cart_items,

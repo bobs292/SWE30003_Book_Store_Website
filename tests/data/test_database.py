@@ -622,6 +622,205 @@ def test_seed_books_updates_changed_price_on_reseed(isolated_db):
     assert rows[0]["price"] == 9.99
 
 
+def test_seed_books_isbn_change_removes_stale_record(isolated_db):
+    # When an isbn is corrected in the seed file, re-seeding must delete the
+    # old row rather than leaving it alongside the new one.
+    original = {
+        "books": [
+            {
+                "title": "Gone Girl",
+                "author": "Gillian Flynn",
+                "isbn": "9780000000001",
+                "genre": "Mystery",
+                "description": "",
+                "price": 19.99,
+                "stock": 5,
+            }
+        ]
+    }
+    updated = {
+        "books": [
+            {
+                "title": "Gone Girl",
+                "author": "Gillian Flynn",
+                "isbn": "9780307588371",  # corrected isbn
+                "genre": "Mystery",
+                "description": "",
+                "price": 19.99,
+                "stock": 5,
+            }
+        ]
+    }
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(original, f)
+    init_db()
+
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(updated, f)
+    init_db()
+
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT isbn FROM books WHERE title = ?", ("Gone Girl",)
+    ).fetchall()
+    conn.close()
+
+    # Only the corrected isbn must exist — the old stale record must be gone.
+    assert len(rows) == 1
+    assert rows[0]["isbn"] == "9780307588371"
+
+
+def test_seed_books_isbn_change_stores_new_isbn(isolated_db):
+    # The row kept after an isbn correction must carry the new isbn, not the old.
+    original = {
+        "books": [
+            {
+                "title": "Dune",
+                "author": "Frank Herbert",
+                "isbn": "9780000000002",
+                "genre": "Sci-Fi",
+                "description": "",
+                "price": 24.99,
+                "stock": 3,
+            }
+        ]
+    }
+    updated = {
+        "books": [
+            {
+                "title": "Dune",
+                "author": "Frank Herbert",
+                "isbn": "9780441013593",
+                "genre": "Sci-Fi",
+                "description": "",
+                "price": 24.99,
+                "stock": 3,
+            }
+        ]
+    }
+
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(original, f)
+    init_db()
+
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(updated, f)
+    init_db()
+
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT isbn FROM books WHERE title = ? AND author = ?",
+        ("Dune", "Frank Herbert"),
+    ).fetchone()
+    conn.close()
+
+    assert row is not None
+    assert row["isbn"] == "9780441013593"
+
+
+def test_seed_books_isbn_change_does_not_affect_other_books(isolated_db):
+    # Correcting one book's isbn must leave other books untouched.
+    original = {
+        "books": [
+            {
+                "title": "Book A",
+                "author": "Author A",
+                "isbn": "9780000000001",
+                "genre": "Fiction",
+                "description": "",
+                "price": 10.0,
+                "stock": 1,
+            },
+            {
+                "title": "Book B",
+                "author": "Author B",
+                "isbn": "9780000000002",
+                "genre": "Fiction",
+                "description": "",
+                "price": 10.0,
+                "stock": 1,
+            },
+        ]
+    }
+    updated = {
+        "books": [
+            {
+                "title": "Book A",
+                "author": "Author A",
+                "isbn": "9780000000099",
+                "genre": "Fiction",
+                "description": "",
+                "price": 10.0,
+                "stock": 1,
+            },
+            {
+                "title": "Book B",
+                "author": "Author B",
+                "isbn": "9780000000002",
+                "genre": "Fiction",
+                "description": "",
+                "price": 10.0,
+                "stock": 1,
+            },
+        ]
+    }
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(original, f)
+    init_db()
+
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(updated, f)
+    init_db()
+
+    conn = get_connection()
+    count = conn.execute("SELECT COUNT(*) FROM books").fetchone()[0]
+    book_b = conn.execute(
+        "SELECT isbn FROM books WHERE title = ?", ("Book B",)
+    ).fetchone()
+    conn.close()
+
+    assert count == 2
+    assert book_b["isbn"] == "9780000000002"
+
+
+def test_seed_books_same_title_different_author_keeps_both(isolated_db):
+    # Two books that share a title but have different authors are distinct works
+    # and must both be kept even if one's isbn is updated.
+    seed = {
+        "books": [
+            {
+                "title": "Hamlet",
+                "author": "William Shakespeare",
+                "isbn": "9780000000001",
+                "genre": "Drama",
+                "description": "",
+                "price": 9.99,
+                "stock": 2,
+            },
+            {
+                "title": "Hamlet",
+                "author": "A.C. Bradley",
+                "isbn": "9780000000002",
+                "genre": "Nonfiction",
+                "description": "",
+                "price": 14.99,
+                "stock": 1,
+            },
+        ]
+    }
+    with open(db_module.SEEDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(seed, f)
+    init_db()
+
+    conn = get_connection()
+    count = conn.execute(
+        "SELECT COUNT(*) FROM books WHERE title = ?", ("Hamlet",)
+    ).fetchone()[0]
+    conn.close()
+
+    assert count == 2
+
+
 # ============================================================================
 # _seed_users
 # Tests that the user seed loader reads data.json and populates the customers

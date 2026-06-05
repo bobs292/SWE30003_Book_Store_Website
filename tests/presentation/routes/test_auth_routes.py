@@ -28,6 +28,18 @@ def app(auth_service):
         return "homepage"
 
     flask_app.register_blueprint(create_auth_routes(auth_service))
+
+    # Register order blueprint stub so url_for('order.checkout') works
+    from flask import Blueprint
+
+    order_bp = Blueprint("order", __name__)
+
+    @order_bp.route("/checkout")
+    def checkout():
+        return "checkout"
+
+    flask_app.register_blueprint(order_bp)
+
     return flask_app
 
 
@@ -70,6 +82,24 @@ def test_register_post_valid_redirects_to_login(client, auth_service):
     )
     assert response.status_code == 302
     assert "/login" in response.headers["Location"]
+
+
+def test_register_post_valid_sets_registration_success_flag(client, auth_service):
+    # After successful registration, a flag should be set so the login page
+    # can display a registration success message.
+    auth_service.validate.return_value = {}
+    auth_service.register.return_value = None
+    client.post(
+        "/register",
+        data={
+            "first_name": "John",
+            "last_name": "Smith",
+            "email": "john@example.com",
+            "password": "Passw0rd",
+        },
+    )
+    with client.session_transaction() as sess:
+        assert sess.get("registration_success") is True
 
 
 def test_register_post_calls_service_with_form_fields(client, auth_service):
@@ -212,7 +242,13 @@ def test_login_get_returns_200(client):
 def test_login_get_renders_login_template(client):
     with patch(_RENDER, return_value="form") as mock_render:
         client.get("/login")
-    mock_render.assert_called_once_with("login.html")
+    mock_render.assert_called_once_with(
+        "login.html",
+        errors={},
+        form={},
+        checkout_login=False,
+        registration_success=False,
+    )
 
 
 # ============================================================================
@@ -276,3 +312,123 @@ def test_logout_clears_session(client, auth_service):
     with client.session_transaction() as sess:
         assert "customer_id" not in sess
         assert "email" not in sess
+
+
+def test_logout_preserves_cart(client, auth_service):
+    # When logging out, the cart should be preserved so the user can continue
+    # shopping without re-adding items to their cart.
+    auth_service.login.return_value = {"customer_id": 1, "email": "a@b.co"}
+    with client.session_transaction() as sess:
+        sess["cart"] = {"1": 2, "2": 1}
+
+    client.get("/logout")
+
+    with client.session_transaction() as sess:
+        assert sess["cart"] == {"1": 2, "2": 1}
+
+
+def test_logout_clears_login_but_preserves_empty_cart(client, auth_service):
+    # Even if the cart is empty, the logout should still clear login info.
+    auth_service.login.return_value = {"customer_id": 1, "email": "a@b.co"}
+    client.post("/login", data={"email": "a@b.co", "password": "Passw0rd"})
+    with client.session_transaction() as sess:
+        sess["cart"] = {}
+
+    client.get("/logout")
+
+    with client.session_transaction() as sess:
+        assert "customer_id" not in sess
+        assert "email" not in sess
+        assert sess.get("cart") == {} or "cart" not in sess
+
+
+# ============================================================================
+# Checkout login flow
+
+
+def test_login_get_with_checkout_flag_renders_checkout_message(client):
+    # When checkout_login_message is set in the session, the login page
+    # should display the checkout message.
+    with client.session_transaction() as sess:
+        sess["checkout_login_message"] = True
+
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.get("/login")
+
+    _, kwargs = mock_render.call_args
+    assert kwargs["checkout_login"] is True
+
+
+def test_login_get_without_checkout_flag_does_not_show_message(client):
+    # When checkout_login_message is not set, the checkout message should
+    # not be shown.
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.get("/login")
+
+    _, kwargs = mock_render.call_args
+    assert kwargs["checkout_login"] is False
+
+
+def test_login_post_with_checkout_flag_redirects_to_checkout(client, auth_service):
+    # When the user logs in with the checkout_login_message flag set,
+    # they should be redirected to /checkout instead of home.
+    with client.session_transaction() as sess:
+        sess["checkout_login_message"] = True
+
+    auth_service.login.return_value = {"customer_id": 1, "email": "a@b.co"}
+    response = client.post("/login", data={"email": "a@b.co", "password": "Passw0rd"})
+
+    assert response.status_code == 302
+    assert "/checkout" in response.headers["Location"]
+
+
+def test_login_post_with_checkout_flag_clears_flag_after_use(client, auth_service):
+    # The checkout_login_message flag should be cleared after being used
+    # so it doesn't persist to subsequent logins.
+    with client.session_transaction() as sess:
+        sess["checkout_login_message"] = True
+
+    auth_service.login.return_value = {"customer_id": 1, "email": "a@b.co"}
+    client.post("/login", data={"email": "a@b.co", "password": "Passw0rd"})
+
+    with client.session_transaction() as sess:
+        assert "checkout_login_message" not in sess
+
+
+def test_login_post_without_checkout_flag_redirects_to_homepage(client, auth_service):
+    # Normal login (without the checkout flag) should redirect to home.
+    auth_service.login.return_value = {"customer_id": 1, "email": "a@b.co"}
+    response = client.post("/login", data={"email": "a@b.co", "password": "Passw0rd"})
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/")
+
+
+# ============================================================================
+# Registration success flow
+
+
+def test_login_get_with_registration_success_renders_message(client):
+    # When registration_success flag is set in the session, the login page
+    # should display the registration success message.
+    with client.session_transaction() as sess:
+        sess["registration_success"] = True
+
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.get("/login")
+
+    _, kwargs = mock_render.call_args
+    assert kwargs["registration_success"] is True
+
+
+def test_login_post_with_registration_success_clears_flag(client, auth_service):
+    # The registration_success flag should be cleared after login
+    # so it doesn't persist to subsequent logins.
+    with client.session_transaction() as sess:
+        sess["registration_success"] = True
+
+    auth_service.login.return_value = {"customer_id": 1, "email": "a@b.co"}
+    client.post("/login", data={"email": "a@b.co", "password": "Passw0rd"})
+
+    with client.session_transaction() as sess:
+        assert "registration_success" not in sess

@@ -44,20 +44,32 @@ def cache_covers(books, cache_dir):
     """
     os.makedirs(cache_dir, exist_ok=True)
 
-    for book in books:
-        isbn = book.get("isbn")
-        if not isbn:
-            continue  # Safety net: nothing to fetch without an isbn.
+    to_fetch = [
+        b
+        for b in books
+        if b.get("isbn")
+        and not os.path.exists(os.path.join(cache_dir, f"{b['isbn']}.jpg"))
+    ]
 
+    if not to_fetch:
+        print("  [covers] All covers already cached.", flush=True)
+        return
+
+    total = len(to_fetch)
+    print(f"  [covers] Fetching {total} new cover(s) from Open Library...", flush=True)
+
+    for i, book in enumerate(to_fetch, 1):
+        isbn = book["isbn"]
+        title = book.get("title", isbn)
         dest = os.path.join(cache_dir, f"{isbn}.jpg")
-        if os.path.exists(dest):
-            # Already cached from a previous run. No need to fetch again.
-            continue
-
+        print(f"  [covers] [{i}/{total}] {title}", flush=True)
         _fetch_and_save(isbn, dest)
         # Pause briefly between requests to avoid rate-limiting by Open Library
         # and archive.org.
-        time.sleep(0.5)
+        if i < total:
+            time.sleep(0.5)
+
+    print("  [covers] Done.", flush=True)
 
 
 def _fetch_and_save(isbn, dest):

@@ -1,3 +1,9 @@
+"""Order processing and checkout management.
+
+Handles the complete checkout workflow: stock validation, payment processing,
+order and invoice creation, and inventory updates.
+"""
+
 from datetime import datetime
 
 from src.domain.models.invoice import Invoice
@@ -9,6 +15,8 @@ from src.domain.repositories.payment_gateway import PaymentGateway
 
 
 class CheckoutService:
+    """Manages the order checkout process and invoice generation."""
+
     def __init__(
         self,
         order_repo: OrderRepository,
@@ -16,6 +24,14 @@ class CheckoutService:
         book_repo: BookRepository,
         payment_gateway: PaymentGateway,
     ):
+        """Initializes checkout service with required repositories and payment gateway.
+
+        Args:
+            order_repo: Repository for saving orders
+            invoice_repo: Repository for saving invoices
+            book_repo: Repository for book stock management
+            payment_gateway: Payment processor for charging customers
+        """
         self.order_repo = order_repo
         self.invoice_repo = invoice_repo
         self.book_repo = book_repo
@@ -32,6 +48,27 @@ class CheckoutService:
         payment_details: dict,
         shipping_fee: float = 9.99,
     ):
+        """Process checkout: validate stock, charge payment, create order.
+
+        Validates book availability, charges the customer, creates an order and
+        invoice, and updates inventory. Raises ValueError if books are unavailable
+        or payment fails.
+
+        Args:
+            customer_id: ID of the customer making the purchase
+            cart_items: List of dicts with book_id, quantity, unit_price
+            shipping_address: Full shipping address or "Store Pickup"
+            shipping_phone: Customer phone number for delivery (nullable)
+            payment_details: Payment info (unused in current implementation)
+            shipping_fee: Shipping cost (0.0 for store pickup)
+
+        Returns:
+            Tuple of (Order, Invoice) for the successful transaction
+
+        Raises:
+            ValueError: If book not found or stock is insufficient
+            Exception: If payment processing fails
+        """
         # ensure stock is available and fetch book objects
         books = {}
         for item in cart_items:
@@ -45,7 +82,7 @@ class CheckoutService:
         subtotal = sum(item["quantity"] * item["unit_price"] for item in cart_items)
         total = subtotal + shipping_fee
 
-        # prrocess payment
+        # process payment
         if not self.payment_gateway.charge(total, payment_details):
             raise Exception("Payment failed")
 

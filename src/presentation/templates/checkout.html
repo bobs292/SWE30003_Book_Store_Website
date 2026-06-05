@@ -8,7 +8,107 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div>
-
+<div class="page-header">
+    <h1>Checkout</h1>
 </div>
+<div class="checkout">
+    <!-- left side FORM -->
+    <div class="checkout-form">
+        <form method="POST" action="{{ url_for('order.checkout') }}">
+
+        <label>Street address</label>
+        <input type="text" name="address" required>
+
+        <label>City</label>
+        <input type="text" name="city" required>
+
+        <label>Postcode</label>
+        <input type="text" name="postcode" required>
+
+        <label>Phone</label>
+        <input type="tel" name="phone" required>
+
+        <button type="submit" class="btn-order">Place Order</button>
+      </form>
+    </div>
+    <!-- right side summary -->
+  <div class="order-summary">
+      <h3>Order Summary</h3>
+      <table>
+        <thead><tr><th>Item</th><th>Price</th></tr></thead>
+        <tbody>
+          {% for item in cart_items %}
+          <tr><td>{{ item.book.title }}</td><td>${{ '%.2f'|format(item.book.price) }}</td></tr>
+          {% endfor %}
+          <tr><td>Shipping (flat rate)</td><td>$9.99</td></tr>
+        </tbody>
+      </table>
+      <div class="total-section">
+        <strong>Total: ${{ '%.2f'|format(subtotal + 9.99) }}</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.checkout {
+  display: flex;
+  gap: 2rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.checkout-form {
+  flex: 2;
+  min-width: 260px;
+}
+
+.order-summary {
+  flex: 1.5;
+  min-width: 260px;
+}
+
+.checkout-form label {
+  display: block;
+  margin: 0.75rem 0 0.25rem;
+  font-weight: 500;
+}
+
+.checkout-form input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.btn-order {
+  margin-top: 1.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--brand, #1f6f5c);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.order-summary table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.order-summary td, .order-summary th {
+  padding: 0.5rem;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+.total-section {
+  margin-top: 1rem;
+  text-align: right;
+  border-top: 1px solid #ddd;
+  padding-top: 0.5rem;
+}
+</style>
+
 {% endblock %}

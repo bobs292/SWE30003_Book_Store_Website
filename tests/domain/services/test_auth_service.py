@@ -132,16 +132,17 @@ def test_validate_formats_strips_spaces_from_phone(service):
 
 
 def test_validate_formats_international_phone_with_plus(service):
+    # +61XXXXXXXXX is valid and normalised to domestic 0XXXXXXXXX.
     errors, cleaned = service._validate_formats(phone_number="+61412345678")
     assert errors == {}
-    assert cleaned == "+61412345678"
+    assert cleaned == "0412345678"
 
 
 def test_validate_formats_international_phone_without_plus(service):
-    # 614xxxxxxxx without the leading + should also be accepted.
+    # 61XXXXXXXXX (no leading +) is valid and normalised to 0XXXXXXXXX.
     errors, cleaned = service._validate_formats(phone_number="61412345678")
     assert errors == {}
-    assert cleaned == "61412345678"
+    assert cleaned == "0412345678"
 
 
 def test_validate_formats_none_email_and_phone(service):
@@ -149,6 +150,33 @@ def test_validate_formats_none_email_and_phone(service):
     errors, cleaned = service._validate_formats(email=None, phone_number=None)
     assert errors == {}
     assert cleaned is None
+
+
+# --- _normalize_phone ---
+
+
+def test_normalize_phone_domestic_unchanged(service):
+    assert service._normalize_phone("0412345678") == "0412345678"
+
+
+def test_normalize_phone_plus_international_to_domestic(service):
+    assert service._normalize_phone("+61412345678") == "0412345678"
+
+
+def test_normalize_phone_bare_international_to_domestic(service):
+    assert service._normalize_phone("61412345678") == "0412345678"
+
+
+def test_normalize_phone_strips_spaces(service):
+    assert service._normalize_phone("0412 345 678") == "0412345678"
+
+
+def test_normalize_phone_international_with_spaces(service):
+    assert service._normalize_phone("+614 12 345 678") == "0412345678"
+
+
+def test_normalize_phone_none_returns_none(service):
+    assert service._normalize_phone(None) is None
 
 
 # --- validate ---
@@ -174,6 +202,16 @@ def test_validate_duplicate_phone(service, repo):
     repo.save(make_customer(phone_number="0412345678"))
     errors = service.validate(
         email="new@example.com", phone_number="0412345678", password="Passw0rd"
+    )
+    assert errors["phone_number"] == "This phone number is already registered."
+
+
+def test_validate_duplicate_phone_cross_format(service, repo):
+    # A number registered as +61XXXXXXXXX must block re-registration as
+    # 0XXXXXXXXX (and vice-versa) because both normalise to the same value.
+    repo.save(make_customer(phone_number="0412345678"))
+    errors = service.validate(
+        email="new@example.com", phone_number="+61412345678", password="Passw0rd"
     )
     assert errors["phone_number"] == "This phone number is already registered."
 
@@ -236,6 +274,16 @@ def test_register_duplicate_phone_raises(service, repo):
     with pytest.raises(ValueError, match="already registered"):
         service.register(
             "Jane", "Doe", "c@d.co", "Passw0rd1", phone_number="0412345678"
+        )
+
+
+def test_register_duplicate_phone_cross_format_raises(service, repo):
+    # Registering with +61XXXXXXXXX then 0XXXXXXXXX (or vice-versa) must be
+    # rejected because both normalise to the same stored value.
+    service.register("John", "Smith", "a@b.co", "Passw0rd", phone_number="0412345678")
+    with pytest.raises(ValueError, match="already registered"):
+        service.register(
+            "Jane", "Doe", "c@d.co", "Passw0rd1", phone_number="+61412345678"
         )
 
 

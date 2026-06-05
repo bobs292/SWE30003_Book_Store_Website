@@ -19,3 +19,7 @@ class BookRepository(ABC):
     def get_by_id(self, book_id):
         # Returns a single book matching the given id, or None if not found.
         pass
+    @abstractmethod
+    def update(self, book):
+        # updates a book record, for stock change etc.
+        pass

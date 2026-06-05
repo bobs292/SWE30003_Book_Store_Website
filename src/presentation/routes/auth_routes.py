@@ -14,6 +14,10 @@ def create_auth_routes(auth_service):
                     email=request.form.get("email"),
                     password=request.form.get("password"),
                     phone_number=request.form.get("phone_number") or None,
+                    street=request.form.get("street") or None,
+                    suburb=request.form.get("suburb") or None,
+                    state=request.form.get("state") or None,
+                    postcode=request.form.get("postcode") or None,
                 )
                 flash("Registration successful. Please log in.", "success")
                 return redirect(url_for("auth.login"))
@@ -30,6 +34,7 @@ def create_auth_routes(auth_service):
                     password=request.form.get("password"),
                 )
                 session["customer_id"] = user["customer_id"]
+                session["email"] = user["email"]
                 flash("Login successful.", "success")
                 return redirect(url_for("homepage"))
             except ValueError as e:

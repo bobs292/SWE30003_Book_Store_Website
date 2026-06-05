@@ -32,6 +32,16 @@ class FakeCatalogueService:
         return BOOKS
 
 
+class FakeCheckoutService:
+    def process_checkout(self, *args, **kwargs):
+        return None, None
+
+
+class FakeCustomerRepo:
+    def find_by_id(self, customer_id):
+        return None
+
+
 # ============================================================================
 # Fixtures
 # A pytest fixture is a function that sets something up before a test runs.
@@ -89,7 +99,9 @@ def app():
 
     app.register_blueprint(auth_bp)
 
-    order_bp = create_order_routes(FakeCatalogueService())
+    order_bp = create_order_routes(
+        FakeCatalogueService(), FakeCheckoutService(), FakeCustomerRepo()
+    )
     app.register_blueprint(order_bp)
     return app
 

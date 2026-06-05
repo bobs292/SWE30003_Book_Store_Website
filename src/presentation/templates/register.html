@@ -46,6 +46,17 @@
         font-size: 16px;
     }
     button:hover {background-color: red;}
+    .flash-messages {
+        margin-bottom: 1rem;
+    }
+    .flash {
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.75rem;
+        border-radius: 4px;
+        color: #fff;
+    }
+    .flash.error { background: #d32f2f; }
+    .flash.success { background: #2e7d32; }
     .footer-links {
         margin-top: 1rem;
         text-align: center;
@@ -55,22 +66,43 @@
 
 <div class="login-box">
             <h2>Register</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
     <form action="{{ url_for('auth.register') }}" method="POST">
                 <div class="form-group">
-                    <label for="First_Name">First Name</label>
-                    <input type="text" id="First_Name" name="First_Name" placeholder="Enter First name" required>
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" placeholder="Enter First name" required>
                 </div>
                 <div class="form-group">
-                    <label for="Last_Name">Last Name</label>
-                    <input type="text" id="Last_Name" name="Last_Name" placeholder="Enter Last name" required>
+                    <label for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" placeholder="Enter Last name" required>
                 </div>
                 <div class="form-group">
                     <label for="email">Email</label>
                     <input type="text" id="email" name="email" placeholder="Enter Email" required>
                 </div>
                 <div class="form-group">
-                    <label for="address">Address</label>
-                    <input type="text" id="address" name="address" placeholder="Enter Address" required>
+                    <label for="street">Street Address</label>
+                    <input type="text" id="street" name="street" placeholder="Enter Street Address">
+                </div>
+                <div class="form-group">
+                    <label for="suburb">Suburb</label>
+                    <input type="text" id="suburb" name="suburb" placeholder="Enter Suburb">
+                </div>
+                <div class="form-group">
+                    <label for="state">State</label>
+                    <input type="text" id="state" name="state" placeholder="e.g. VIC">
+                </div>
+                <div class="form-group">
+                    <label for="postcode">Postcode</label>
+                    <input type="text" id="postcode" name="postcode" placeholder="e.g. 3000">
                 </div>
                 <div class="form-group">
                     <label for="phone_number">Enter Phone Number</label>

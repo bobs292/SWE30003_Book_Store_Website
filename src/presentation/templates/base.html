@@ -11,13 +11,20 @@
             <a href="{{ url_for('homepage') }}" class="{% if request.endpoint == 'homepage' %}active{% endif %}">Home</a>
             <a href="{{ url_for('catalogue.catalogue_page') }}" class="{% if request.endpoint == 'catalogue.catalogue_page' %}active{% endif %}">Catalogue</a>
 
-            <!-- change to when logged Out is visible -->
-            <a href="{{ url_for('auth.register') }}" class="{% if request.endpoint == 'auth.register' %}active{% endif %}">Register</a>
-            <a href="{{ url_for('auth.login') }}" class="{% if request.endpoint == 'auth.login' %}active{% endif %}">Login</a>
-            <!-- change to when logged in is visible-->
-            <a href="{{ url_for('auth.logout') }}">Logout</a>
+            <!-- Show when logged out -->
+            {% if not current_user_email %}
+                <a href="{{ url_for('auth.register') }}" class="{% if request.endpoint == 'auth.register' %}active{% endif %}">Register</a>
+                <a href="{{ url_for('auth.login') }}" class="{% if request.endpoint == 'auth.login' %}active{% endif %}">Login</a>
+            {% endif %}
+            <!-- Show when logged in -->
+            {% if current_user_email %}
+                <a href="{{ url_for('auth.logout') }}">Logout</a>
+            {% endif %}
         </div>
         <div class="nav-right">
+            {% if current_user_email %}
+                <div class="nav-user">Logged in as {{ current_user_email }}</div>
+            {% endif %}
             <a href="{{ url_for('order.cart') }}" class="cart-link {% if request.endpoint == 'order.cart' %}active{% endif %}">
                 <span class="cart-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" role="img" focusable="false">

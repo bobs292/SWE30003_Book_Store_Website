@@ -105,8 +105,26 @@
             "isbn": "9780399167065",
             "genre": "Mystery",
             "description": "Three women, three marriages, three secrets. A darkly comic tale of school politics, petty rivalries, and a murder at a trivia night.",
-            "price": 19.50,
+            "price": 19.5,
             "stock": 11
+        }
+    ],
+    "users": [
+        {
+            "first_name": "Jack",
+            "last_name": "O'brien",
+            "email": "jackobrien429@gmail.com",
+            "password": "scrypt:32768:8:1$30kE8rBjCR6cuwR8$49bf40206534b66681bf044ca18e1ff4b51e43cfc7d41b71beb3830aee4c9d560eb9e0a26a97cd52a53045d5eaf48051fbda4d04f54d53ad05611e4af8775078",
+            "phone_number": "0407590046",
+            "address": "4 moonlight rise"
+        },
+        {
+            "first_name": "Jack",
+            "last_name": "O'Brien",
+            "email": "jackobrien@gmail.com",
+            "password": "scrypt:32768:8:1$VvmMofAUkbvWwRjT$8d5b3634c43a082c11305089504bd84a768c1eb6b730545c81d1c06637e9094961e192e11ace8f07fb72efc3b4653ebaa0c021473eea943d497ef13336227164",
+            "phone_number": "0407590046",
+            "address": "4 moonlight rise"
         }
     ]
 }

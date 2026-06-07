@@ -117,11 +117,6 @@ This runs:
 - Code style checks via flake8 (formatting, linting, and pytest-specific style)
 - Architectural import contract verification
 
-Address validation integration tests hit the real SmartyStreets API and are skipped automatically when credentials are absent. To run them, load `.env.local` before invoking pytest:
-
-```bash
-export $(grep -v '^#' .env.local | xargs) && pytest
-```
 
 To run tests without code style checks:
 

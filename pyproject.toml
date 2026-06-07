@@ -26,6 +26,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
+    "pytest-dotenv",
     "import-linter",
     "import-linter[ui]",
     "pre-commit",
@@ -39,6 +40,7 @@ dev = [
 [tool.hatch.envs.default]
 dependencies = [
     "pytest",
+    "pytest-dotenv",
     "import-linter",
     "import-linter[ui]",
     "pre-commit",
@@ -50,10 +52,16 @@ dependencies = [
 
 # Tells pytest where to find tests and how to resolve imports.
 # pythonpath = ["src"] means test files can import from domain, data and presentation directly.
+# dotenv_override = false means .env.local values are additional, not overrides.
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "--flake8"
+env_files = [
+    ".env",
+    ".env.local",
+]
+dotenv_override = false
 
 # Defines the root package for import-linter to analyse.
 [tool.importlinter]

@@ -31,7 +31,7 @@ def make_customer(**overrides):
         first_name="John",
         last_name="Smith",
         email="john.smith@example.com",
-        phone_number="0412345678",
+        phone_number=None,
         password=VALID_PASSWORD,
         address=None,
     )
@@ -122,7 +122,7 @@ def test_phone_number_null_is_valid(repo):
 
 
 def test_phone_number_lower_bound(repo):
-    repo.save(make_customer(phone_number="0412345678"))
+    repo.save(make_customer(phone_number="0498765432"))
     assert repo.find_by_email("john.smith@example.com") is not None
 
 
@@ -147,21 +147,21 @@ def test_phone_number_non_digits_raises(repo):
 
 
 def test_find_by_phone_number_returns_customer(repo):
-    repo.save(make_customer(phone_number="0412345678"))
-    result = repo.find_by_phone_number("0412345678")
+    repo.save(make_customer(phone_number="0498765432"))
+    result = repo.find_by_phone_number("0498765432")
     assert result is not None
     assert result.email == "john.smith@example.com"
 
 
 def test_find_by_phone_number_returns_none_when_not_found(repo):
-    repo.save(make_customer(phone_number="0412345678"))
+    repo.save(make_customer(phone_number="0498765432"))
     assert repo.find_by_phone_number("0499999999") is None
 
 
 def test_phone_number_must_be_unique(repo):
-    repo.save(make_customer(email="a@b.co", phone_number="0412345678"))
+    repo.save(make_customer(email="a@b.co", phone_number="0498765432"))
     with pytest.raises(sqlite3.IntegrityError):
-        repo.save(make_customer(email="c@d.co", phone_number="0412345678"))
+        repo.save(make_customer(email="c@d.co", phone_number="0498765432"))
 
 
 def test_password_lower_bound(repo):

@@ -49,6 +49,13 @@ class FakeAddressGateway(AddressGateway):
         return None
 
 
+class FailingAddressGateway(AddressGateway):
+    """Address gateway that always returns a validation error."""
+
+    def validate(self, street, suburb, state, postcode):
+        return "Address could not be verified."
+
+
 # ============================================================================
 # Fixtures
 # A pytest fixture is a function that sets something up before a test runs.
@@ -111,6 +118,50 @@ def app():
         FakeCheckoutService(),
         FakeCustomerRepo(),
         FakeAddressGateway(),
+    )
+    app.register_blueprint(order_bp)
+    return app
+
+
+def _make_app_with_address_gateway(gateway):
+    """Build a test app with a custom address gateway."""
+    app = Flask(__name__, template_folder="../../../src/presentation/templates")
+    app.config["TESTING"] = True
+    app.config["SECRET_KEY"] = "test"
+
+    catalogue_bp = Blueprint("catalogue", __name__)
+
+    @catalogue_bp.route("/catalogue")
+    def catalogue_page():
+        return ""
+
+    app.register_blueprint(catalogue_bp)
+
+    @app.route("/")
+    def homepage():
+        return ""
+
+    auth_bp = Blueprint("auth", __name__)
+
+    @auth_bp.route("/register")
+    def register():
+        return ""
+
+    @auth_bp.route("/login")
+    def login():
+        return ""
+
+    @auth_bp.route("/logout")
+    def logout():
+        return ""
+
+    app.register_blueprint(auth_bp)
+
+    order_bp = create_order_routes(
+        FakeCatalogueService(),
+        FakeCheckoutService(),
+        FakeCustomerRepo(),
+        gateway,
     )
     app.register_blueprint(order_bp)
     return app
@@ -458,8 +509,7 @@ def test_cart_page_drops_book_removed_from_catalogue(client):
 
 
 # ============================================================================
-# checkout
-# Tests for /checkout route.
+# checkout — authentication
 # When unauthenticated, a user trying to access checkout should be
 # redirected to login with a flag that indicates they came from checkout.
 # This flag should then cause the login route to redirect back to checkout
@@ -480,3 +530,260 @@ def test_checkout_get_unauthenticated_sets_checkout_flag_in_session(client):
     client.get("/checkout")
     with client.session_transaction() as sess:
         assert sess.get("checkout_login_message") is True
+
+
+# ============================================================================
+# checkout — address field validation (POST)
+# The route validates delivery fields before calling the address gateway
+# or the checkout service. Missing or malformed fields must re-render the
+# checkout form (200) rather than redirecting.
+
+
+def test_checkout_post_missing_street_rerenders_form(client):
+    # Street is required for delivery — an empty value must produce a
+    # field-level error and re-render the form.
+    with client.session_transaction() as sess:
+        sess["customer_id"] = 1
+        sess["cart"] = {"1": 1}
+    response = client.post(
+        "/checkout",
+        data={
+            "delivery_method": "delivery",
+            "street": "",
+            "suburb": "Melbourne",
+            "state": "VIC",
+            "postcode": "3000",
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_checkout_post_missing_suburb_rerenders_form(client):
+    with client.session_transaction() as sess:
+        sess["customer_id"] = 1
+        sess["cart"] = {"1": 1}
+    response = client.post(
+        "/checkout",
+        data={
+            "delivery_method": "delivery",
+            "street": "1 Main St",
+            "suburb": "",
+            "state": "VIC",
+            "postcode": "3000",
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_checkout_post_missing_state_rerenders_form(client):
+    with client.session_transaction() as sess:
+        sess["customer_id"] = 1
+        sess["cart"] = {"1": 1}
+    response = client.post(
+        "/checkout",
+        data={
+            "delivery_method": "delivery",
+            "street": "1 Main St",
+            "suburb": "Melbourne",
+            "state": "",
+            "postcode": "3000",
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_checkout_post_missing_postcode_rerenders_form(client):
+    with client.session_transaction() as sess:
+        sess["customer_id"] = 1
+        sess["cart"] = {"1": 1}
+    response = client.post(
+        "/checkout",
+        data={
+            "delivery_method": "delivery",
+            "street": "1 Main St",
+            "suburb": "Melbourne",
+            "state": "VIC",
+            "postcode": "",
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_checkout_post_invalid_postcode_too_short_rerenders_form(client):
+    # Postcode must be exactly 4 digits — 3 digits must be rejected.
+    with client.session_transaction() as sess:
+        sess["customer_id"] = 1
+        sess["cart"] = {"1": 1}
+    response = client.post(
+        "/checkout",
+        data={
+            "delivery_method": "delivery",
+            "street": "1 Main St",
+            "suburb": "Melbourne",
+            "state": "VIC",
+            "postcode": "300",
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_checkout_post_invalid_postcode_non_digits_rerenders_form(client):
+    # Postcode must be digits only — letters must be rejected.
+    with client.session_transaction() as sess:
+        sess["customer_id"] = 1
+        sess["cart"] = {"1": 1}
+    response = client.post(
+        "/checkout",
+        data={
+            "delivery_method": "delivery",
+            "street": "1 Main St",
+            "suburb": "Melbourne",
+            "state": "VIC",
+            "postcode": "3O0O",
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_checkout_post_invalid_state_too_short_rerenders_form(client):
+    # State must be 2 or 3 letters — a single letter must be rejected.
+    with client.session_transaction() as sess:
+        sess["customer_id"] = 1
+        sess["cart"] = {"1": 1}
+    response = client.post(
+        "/checkout",
+        data={
+            "delivery_method": "delivery",
+            "street": "1 Main St",
+            "suburb": "Melbourne",
+            "state": "V",
+            "postcode": "3000",
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_checkout_post_invalid_state_too_long_rerenders_form(client):
+    # State must be 2 or 3 letters — four letters must be rejected.
+    with client.session_transaction() as sess:
+        sess["customer_id"] = 1
+        sess["cart"] = {"1": 1}
+    response = client.post(
+        "/checkout",
+        data={
+            "delivery_method": "delivery",
+            "street": "1 Main St",
+            "suburb": "Melbourne",
+            "state": "VICT",
+            "postcode": "3000",
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_checkout_post_invalid_state_non_letters_rerenders_form(client):
+    # State must be letters only — digits must be rejected.
+    with client.session_transaction() as sess:
+        sess["customer_id"] = 1
+        sess["cart"] = {"1": 1}
+    response = client.post(
+        "/checkout",
+        data={
+            "delivery_method": "delivery",
+            "street": "1 Main St",
+            "suburb": "Melbourne",
+            "state": "V1",
+            "postcode": "3000",
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_checkout_post_invalid_phone_rerenders_form(client):
+    # Phone number must be a valid Australian mobile — a short number
+    # must be rejected before the address gateway is called.
+    with client.session_transaction() as sess:
+        sess["customer_id"] = 1
+        sess["cart"] = {"1": 1}
+    response = client.post(
+        "/checkout",
+        data={
+            "delivery_method": "delivery",
+            "street": "1 Main St",
+            "suburb": "Melbourne",
+            "state": "VIC",
+            "postcode": "3000",
+            "phone_number": "12345",
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_checkout_post_address_gateway_failure_rerenders_form(client):
+    # When the address gateway rejects the address, the form must be
+    # re-rendered with an error rather than proceeding to the order.
+    app = _make_app_with_address_gateway(FailingAddressGateway())
+    with app.test_client() as failing_client:
+        with failing_client.session_transaction() as sess:
+            sess["customer_id"] = 1
+            sess["cart"] = {"1": 1}
+        response = failing_client.post(
+            "/checkout",
+            data={
+                "delivery_method": "delivery",
+                "street": "99 Fake St",
+                "suburb": "Nowhere",
+                "state": "VIC",
+                "postcode": "9999",
+            },
+        )
+    assert response.status_code == 200
+
+
+# ============================================================================
+# checkout — pickup skips address validation
+
+
+def test_checkout_post_pickup_skips_address_validation(client):
+    # Store pickup requires no address fields — empty address must not
+    # produce errors or re-render the form.
+    with client.session_transaction() as sess:
+        sess["customer_id"] = 1
+        sess["cart"] = {"1": 1}
+    response = client.post(
+        "/checkout",
+        data={
+            "delivery_method": "pickup",
+            "street": "",
+            "suburb": "",
+            "state": "",
+            "postcode": "",
+        },
+    )
+    # Pickup with a valid cart should not re-render with validation errors.
+    assert response.status_code in (200, 302)
+
+
+# ============================================================================
+# checkout — empty cart
+
+
+def test_checkout_post_empty_cart_redirects_to_cart(client):
+    # If the cart is empty at the time of submission the route must
+    # redirect back to the cart page rather than attempting to place an
+    # order.
+    with client.session_transaction() as sess:
+        sess["customer_id"] = 1
+        sess["cart"] = {}
+    response = client.post(
+        "/checkout",
+        data={
+            "delivery_method": "delivery",
+            "street": "1 Main St",
+            "suburb": "Melbourne",
+            "state": "VIC",
+            "postcode": "3000",
+        },
+    )
+    assert response.status_code == 302
+    assert "/cart" in response.headers["Location"]

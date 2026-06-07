@@ -1,7 +1,7 @@
 from unittest.mock import ANY, MagicMock, patch
 
 import pytest
-from flask import Flask
+from flask import Blueprint, Flask
 
 from src.presentation.routes.auth_routes import create_auth_routes
 
@@ -30,8 +30,6 @@ def app(auth_service):
     flask_app.register_blueprint(create_auth_routes(auth_service))
 
     # Register order blueprint stub so url_for('order.checkout') works
-    from flask import Blueprint
-
     order_bp = Blueprint("order", __name__)
 
     @order_bp.route("/checkout")
@@ -229,6 +227,140 @@ def test_register_post_errors_passed_to_template(client, auth_service):
     assert "email" in kwargs["errors"]
 
 
+def test_register_post_missing_first_name_shows_error(client, auth_service):
+    # The route checks first_name before calling the service — an empty
+    # first_name must produce a field-level error without reaching register().
+    auth_service.validate.return_value = {}
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.post(
+            "/register",
+            data={
+                "first_name": "",
+                "last_name": "Smith",
+                "email": "a@b.co",
+                "password": "Passw0rd",
+            },
+        )
+    _, kwargs = mock_render.call_args
+    assert "first_name" in kwargs["errors"]
+
+
+def test_register_post_missing_last_name_shows_error(client, auth_service):
+    auth_service.validate.return_value = {}
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.post(
+            "/register",
+            data={
+                "first_name": "John",
+                "last_name": "",
+                "email": "a@b.co",
+                "password": "Passw0rd",
+            },
+        )
+    _, kwargs = mock_render.call_args
+    assert "last_name" in kwargs["errors"]
+
+
+def test_register_post_whitespace_first_name_shows_error(client, auth_service):
+    # Whitespace-only first name must be treated as absent.
+    auth_service.validate.return_value = {}
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.post(
+            "/register",
+            data={
+                "first_name": "   ",
+                "last_name": "Smith",
+                "email": "a@b.co",
+                "password": "Passw0rd",
+            },
+        )
+    _, kwargs = mock_render.call_args
+    assert "first_name" in kwargs["errors"]
+
+
+def test_register_post_whitespace_last_name_shows_error(client, auth_service):
+    auth_service.validate.return_value = {}
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.post(
+            "/register",
+            data={
+                "first_name": "John",
+                "last_name": "   ",
+                "email": "a@b.co",
+                "password": "Passw0rd",
+            },
+        )
+    _, kwargs = mock_render.call_args
+    assert "last_name" in kwargs["errors"]
+
+
+def test_register_post_invalid_email_shows_error(client, auth_service):
+    # Service returns an email error — route must forward it to the template.
+    auth_service.validate.return_value = {"email": "Enter a valid email address."}
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.post(
+            "/register",
+            data={
+                "first_name": "John",
+                "last_name": "Smith",
+                "email": "not-an-email",
+                "password": "Passw0rd",
+            },
+        )
+    _, kwargs = mock_render.call_args
+    assert kwargs["errors"]["email"] == "Enter a valid email address."
+
+
+def test_register_post_invalid_password_shows_error(client, auth_service):
+    auth_service.validate.return_value = {"password": "Password must contain..."}
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.post(
+            "/register",
+            data={
+                "first_name": "John",
+                "last_name": "Smith",
+                "email": "a@b.co",
+                "password": "weak",
+            },
+        )
+    _, kwargs = mock_render.call_args
+    assert "password" in kwargs["errors"]
+
+
+def test_register_post_duplicate_email_shows_error(client, auth_service):
+    auth_service.validate.return_value = {
+        "email": "An account with this email already exists."
+    }
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.post(
+            "/register",
+            data={
+                "first_name": "John",
+                "last_name": "Smith",
+                "email": "taken@example.com",
+                "password": "Passw0rd",
+            },
+        )
+    _, kwargs = mock_render.call_args
+    assert "email" in kwargs["errors"]
+
+
+def test_register_post_missing_first_name_does_not_call_register(client, auth_service):
+    # register() must never be called when there are validation errors.
+    auth_service.validate.return_value = {}
+    with patch(_RENDER, return_value="form"):
+        client.post(
+            "/register",
+            data={
+                "first_name": "",
+                "last_name": "Smith",
+                "email": "a@b.co",
+                "password": "Passw0rd",
+            },
+        )
+    auth_service.register.assert_not_called()
+
+
 # ============================================================================
 # GET /login
 
@@ -289,6 +421,32 @@ def test_login_post_invalid_does_not_set_session(client, auth_service):
         client.post("/login", data={"email": "a@b.co", "password": "wrong"})
     with client.session_transaction() as sess:
         assert "customer_id" not in sess
+
+
+def test_login_post_missing_email_shows_error(client, auth_service):
+    # The route validates presence of email before calling the service.
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.post("/login", data={"email": "", "password": "Passw0rd"})
+    _, kwargs = mock_render.call_args
+    assert "email" in kwargs["errors"]
+    auth_service.login.assert_not_called()
+
+
+def test_login_post_missing_password_shows_error(client, auth_service):
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.post("/login", data={"email": "a@b.co", "password": ""})
+    _, kwargs = mock_render.call_args
+    assert "password" in kwargs["errors"]
+    auth_service.login.assert_not_called()
+
+
+def test_login_post_missing_both_fields_shows_both_errors(client, auth_service):
+    with patch(_RENDER, return_value="form") as mock_render:
+        client.post("/login", data={"email": "", "password": ""})
+    _, kwargs = mock_render.call_args
+    assert "email" in kwargs["errors"]
+    assert "password" in kwargs["errors"]
+    auth_service.login.assert_not_called()
 
 
 # ============================================================================

@@ -20,9 +20,21 @@ dependencies = [
     "smartystreets-python-sdk",
 ]
 
-# Development dependencies available when running commands via hatch.
+# Development dependencies installable via: pip install -e ".[dev]"
 # pytest is the test runner. import-linter enforces architectural import contracts.
 # pre-commit runs lint-imports automatically on every commit.
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "import-linter",
+    "import-linter[ui]",
+    "pre-commit",
+    "pytest-flake8",
+    "flake8",
+    "flake8-pytest-style",
+]
+
+# Kept for hatch compatibility.
 [tool.hatch.envs.default]
 dependencies = [
     "pytest",

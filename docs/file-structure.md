@@ -6,24 +6,41 @@
 SWE30003_Book_Store_Website/
 ├── pyproject.toml
 ├── README.md
+├── Dockerfile
+├── .env
 ├── .gitignore
+├── .pre-commit-config.yaml
 │
 ├── docs/
+│   ├── architecture-style.md
+│   ├── database-decision.md
 │   ├── file-structure.md
-│   └── architecture-style.md
+│   ├── patterns.md
+│   └── where-to-put-what.md
 │
 ├── tests/
+│   ├── test_architecture.py
+│   ├── data/
+│   │   ├── gateways/
+│   │   │   └── test_address_validator.py
+│   │   ├── repositories/
+│   │   │   ├── test_book_repository.py
+│   │   │   ├── test_customer_repository.py
+│   │   │   ├── test_invoice_repository.py
+│   │   │   └── test_order_repository.py
+│   │   ├── test_cover_cache.py
+│   │   └── test_database.py
 │   ├── domain/
 │   │   ├── models/
-│   │   │   ├── test_user.py
-│   │   │   ├── test_customer.py
 │   │   │   ├── test_admin.py
 │   │   │   ├── test_book_title.py
-│   │   │   ├── test_physical_location.py
 │   │   │   ├── test_cart.py
-│   │   │   ├── test_order.py
+│   │   │   ├── test_customer.py
 │   │   │   ├── test_invoice.py
-│   │   │   └── test_shipment.py
+│   │   │   ├── test_order.py
+│   │   │   ├── test_physical_location.py
+│   │   │   ├── test_shipment.py
+│   │   │   └── test_user.py
 │   │   ├── repositories/
 │   │   │   ├── test_admin_repository.py
 │   │   │   ├── test_book_repository.py
@@ -32,19 +49,14 @@ SWE30003_Book_Store_Website/
 │   │   │   └── test_payment_gateway.py
 │   │   └── services/
 │   │       ├── test_auth_service.py
+│   │       ├── test_cart_service.py
 │   │       ├── test_catalogue_service.py
 │   │       ├── test_checkout_service.py
 │   │       ├── test_inventory_service.py
+│   │       ├── test_phone_service.py
 │   │       └── test_search_service.py
-│   ├── data/
-│   │   ├── gateways/
-│   │   │   └── test_address_validator.py
-│   │   ├── repositories/
-│   │   │   ├── test_customer_repository.py
-│   │   │   ├── test_book_repository.py
-│   │   │   └── test_order_repository.py
-│   │   └── test_cover_cache.py
 │   └── presentation/
+│       ├── test_templates.py
 │       └── routes/
 │           ├── test_auth_routes.py
 │           ├── test_catalogue_routes.py
@@ -55,7 +67,7 @@ SWE30003_Book_Store_Website/
     ├── data/
     │   ├── __init__.py
     │   ├── database.py
-    │   ├── store.db
+    │   ├── payment_gateway.py
     │   ├── gateways/
     │   │   ├── __init__.py
     │   │   └── address_validator.py
@@ -63,6 +75,7 @@ SWE30003_Book_Store_Website/
     │   │   ├── __init__.py
     │   │   ├── book_repository.py
     │   │   ├── customer_repository.py
+    │   │   ├── invoice_repository.py
     │   │   └── order_repository.py
     │   └── seeds/
     │       ├── __init__.py
@@ -72,31 +85,29 @@ SWE30003_Book_Store_Website/
     │   ├── __init__.py
     │   ├── gateways/
     │   │   ├── __init__.py
-    │   │   └── address_gateway.py
+    │   │   ├── address_gateway.py
+    │   │   └── payment_gateway.py
     │   ├── models/
     │   │   ├── __init__.py
-    │   │   ├── user.py
-    │   │   ├── customer.py
-    │   │   ├── admin.py
     │   │   ├── book_title.py
-    │   │   ├── physical_location.py
     │   │   ├── cart.py
-    │   │   ├── order.py
+    │   │   ├── customer.py
     │   │   ├── invoice.py
-    │   │   └── shipment.py
+    │   │   ├── order.py
+    │   │   └── user.py
     │   ├── repositories/
     │   │   ├── __init__.py
-    │   │   ├── admin_repository.py
     │   │   ├── book_repository.py
     │   │   ├── customer_repository.py
-    │   │   ├── order_repository.py
-    │   │   └── payment_gateway.py
+    │   │   ├── invoice_repository.py
+    │   │   └── order_repository.py
     │   └── services/
     │       ├── __init__.py
     │       ├── auth_service.py
+    │       ├── cart_service.py
     │       ├── catalogue_service.py
     │       ├── checkout_service.py
-    │       ├── inventory_service.py
+    │       ├── phone_service.py
     │       └── search_service.py
     └── presentation/
         ├── __init__.py
@@ -106,10 +117,14 @@ SWE30003_Book_Store_Website/
         │   ├── catalogue_routes.py
         │   └── order_routes.py
         ├── static/
-        │   └── css/
-        │       └── base.css
+        │   ├── css/
+        │   │   └── base.css
+        │   └── images/
+        │       ├── bookstore.jpg
+        │       └── covers/          # cover images cached from Open Library at startup
         └── templates/
             ├── base.html
+            ├── book_detail.html
             ├── cart.html
             ├── catalogue.html
             ├── checkout.html
@@ -149,7 +164,7 @@ Jinja2 HTML templates for browser-facing pages.
 
 ### src/presentation/static/
 
-Static assets served directly to the browser.
+Static assets served directly to the browser. Cover images are cached here from Open Library at startup — see `docs/architecture-style.md` for the full explanation of this design decision.
 
 ## src/domain/
 
@@ -161,7 +176,7 @@ In terms of software abstraction levels, this layer operates at the level of com
 
 The business entities of the system. Each file represents one concept from the domain model defined in Assignment 2.
 
-`user.py` is an abstract class and is the parent of `customer.py` and `admin.py`. This is an Is-Kind-Of (inheritance) relationship. Keeping all three together makes the class hierarchy visible in the filesystem.
+`user.py` is an abstract class and is the parent of `customer.py`. This is an Is-Kind-Of (inheritance) relationship.
 
 ### src/domain/gateways/
 
@@ -174,8 +189,6 @@ The specifications that define what persistent storage operations the domain req
 ### src/domain/services/
 
 One file per area of business logic. Each service encapsulates a cohesive set of responsibilities in the sense used by Responsibility-Driven Design, and collaborates with other services and the domain repository interfaces only.
-
-This folder maps directly to the controller classes identified in Assignment 2.
 
 ## src/data/
 
@@ -191,7 +204,7 @@ Concrete implementations of the repository contracts defined in `src/domain/repo
 
 ### src/data/seeds/
 
-Initial data and utilities that populate the application on first run. `data.json` seeds the books catalogue. `cover_cache.py` fetches and caches cover images from Open Library at seed time so the presentation layer can serve them statically.
+Initial data and utilities that populate the application on first run. `data.json` seeds the books catalogue (78 books) and demo user accounts. `cover_cache.py` fetches and caches cover images from Open Library at seed time so the presentation layer can serve them statically.
 
 ## tests/
 

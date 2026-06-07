@@ -61,7 +61,6 @@ env_files = [
     ".env",
     ".env.local",
 ]
-dotenv_override = false
 
 # Defines the root package for import-linter to analyse.
 [tool.importlinter]

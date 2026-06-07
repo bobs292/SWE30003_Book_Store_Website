@@ -8,11 +8,9 @@ decisions.
 
 ---
 
-Add a single sentence at the top of the How to Install section stating the prerequisites, then include the existing steps. Example final "How to Install" section to paste into README:
-
 ## How to Install
 
-Prerequisites: Python (3.8+) and Git must be installed on all platforms.
+Prerequisites: Python 3.13+ and Git must be installed on all platforms.
 
 Clone the repository and create a virtual environment.
 
@@ -50,8 +48,9 @@ Activate the virtual environment:
 Install the package and its dependencies.
 
 ```bash
-pip install -e .
+pip install -e ".[dev]"
 ```
+
 ## Secrets
 
 The app uses the [SmartyStreets International Street API](https://www.smarty.com/docs/apis/international-street-api) to verify Australian addresses at registration. Credentials are required to run the app and the address validation integration tests.
@@ -109,7 +108,7 @@ Either way, open http://localhost:8000 once it starts.
 The test suite includes unit tests, integration tests, and code style checks.
 
 ```bash
-hatch run pytest
+pytest
 ```
 
 This runs:
@@ -121,28 +120,28 @@ This runs:
 Address validation integration tests hit the real SmartyStreets API and are skipped automatically when credentials are absent. To run them, load `.env.local` before invoking pytest:
 
 ```bash
-export $(grep -v '^#' .env.local | xargs) && hatch run pytest
+export $(grep -v '^#' .env.local | xargs) && pytest
 ```
 
 To run tests without code style checks:
 
 ```bash
-hatch run pytest -p no:flake8
+pytest -p no:flake8
 ```
 
 ---
 
 ## Setting Up for Development
 
-The `pip install -e .` command installs the project. It also makes all imports resolve from `src/` so
-you never need to modify your Python path manually. All development
-dependencies including pytest, import-linter, pre-commit, pytest-flake8,
-flake8, black, and isort are handled by hatch.
+`pip install -e ".[dev]"` installs the project and all development dependencies
+including pytest, import-linter, pre-commit, pytest-flake8, flake8, black, and
+isort. It also makes all imports resolve from `src/` so you never need to
+modify your Python path manually.
 
 Next, install the pre-commit hooks.
 
 ```bash
-hatch run pre-commit install
+pre-commit install
 ```
 
 This registers a git hook that runs automatically every time you run
@@ -167,11 +166,11 @@ the commit is blocked and you will see output explaining the violation.
 To explore the dependency graphs run:
 
 ```bash
-hatch run import-linter explore src
+import-linter explore src
 ```
 
 Or to explore a specific layer (replace `domain` with your target layer):
 
 ```bash
-hatch run import-linter explore src.domain
+import-linter explore src.domain
 ```

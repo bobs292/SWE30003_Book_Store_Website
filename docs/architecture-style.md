@@ -18,7 +18,7 @@ https://martinfowler.com/bliki/PresentationDomainDataLayering.html
 
 ### Data layer
 
-`data.json` seeds 12 real books with ISBNs. On first startup, `init_db` in `database.py` creates the `customers` and `books` tables, then `_seed_books` reads `data.json` and inserts the books into SQLite. After seeding, it calls `cache_covers` with the book list and the covers folder path. `cache_covers` in `cover_cache.py` constructs the Open Library URL
+`data.json` seeds 78 real books with ISBNs. On first startup, `init_db` in `database.py` creates the `customers` and `books` tables, then `_seed_books` reads `data.json` and inserts the books into SQLite. After seeding, it calls `cache_covers` with the book list and the covers folder path. `cache_covers` in `cover_cache.py` constructs the Open Library URL
 for each ISBN and downloads each image as `{isbn}.jpg` into
 `src/presentation/static/images/covers/` via Python's `urllib`
 (which is part of the standard library and works across all
